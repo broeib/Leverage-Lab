@@ -16,7 +16,7 @@ CACHE_FILE = os.path.join(DATA_DIR, "etf_prices.csv")
 VIX_CACHE_FILE = os.path.join(DATA_DIR, "vix_data.csv")
 
 TICKERS = ["QQQ", "QLD", "TQQQ"]
-START_DATE = "2010-02-11"  # TQQQ inception + 1 day for first trade
+START_DATE = "1985-10-01"  # Earliest available ^NDX data
 
 MAX_RETRIES = 5
 RETRY_DELAY = 3  # seconds
@@ -134,6 +134,15 @@ def download_etf_data(force_refresh=False):
     print(f"Downloading ETF data for {TICKERS} from {START_DATE}...")
     end_date = datetime.now().strftime("%Y-%m-%d")
 
+    # Download NDX index for backfilling
+    print("Downloading NASDAQ-100 (^NDX) index for backfilling...")
+    ndx_data = _download_single_ticker("%5ENDX", START_DATE, end_date)
+    if ndx_data is None or len(ndx_data) == 0:
+        raise RuntimeError("Could not download NASDAQ-100 index (^NDX) data for backfilling.")
+
+    ndx_data = ndx_data[~ndx_data.index.duplicated(keep="first")]
+    ndx_data.index = pd.to_datetime(ndx_data.index).normalize()
+
     # Download each ticker individually
     ticker_data = {}
     for ticker in TICKERS:
@@ -145,6 +154,78 @@ def download_etf_data(force_refresh=False):
                 f"Could not download data for {ticker}. "
                 "Check your internet connection and try again."
             )
+
+    # Leverage and drag parameters for each ticker
+    leverage_params = {
+        "QQQ": {"leverage": 1.0, "drag": 0.002},
+        "QLD": {"leverage": 2.0, "drag": 0.0075},
+        "TQQQ": {"leverage": 3.0, "drag": 0.015}
+    }
+
+    # For each ticker, perform synthetic backfill
+    for ticker in TICKERS:
+        df = ticker_data[ticker]
+        params = leverage_params[ticker]
+        lev = params["leverage"]
+        drag = params["drag"]
+
+        df = df[~df.index.duplicated(keep="first")]
+        df.index = pd.to_datetime(df.index).normalize()
+
+        first_actual_date = df.index.min()
+        print(f"  Backfilling {ticker} prior to {first_actual_date.date()}...")
+
+        # Calculate NDX daily return
+        ndx_close = ndx_data["Close"].copy()
+        ndx_returns = ndx_close.pct_change()
+
+        # Synthetic return formula:
+        daily_drag = drag / 252.0
+        synth_returns = (ndx_returns * lev) - daily_drag
+
+        # Ensure first_actual_date is in ndx_close.index
+        if first_actual_date not in ndx_close.index:
+            matching_dates = ndx_close.index[ndx_close.index >= first_actual_date]
+            if len(matching_dates) > 0:
+                first_actual_date = matching_dates[0]
+            else:
+                first_actual_date = ndx_close.index[-1]
+
+        # Get all NDX dates that are <= first_actual_date and sort them
+        dates_to_fill = ndx_close[ndx_close.index <= first_actual_date].index.sort_values()
+
+        # Prepare Series to hold synthetic Close
+        synth_close = pd.Series(index=dates_to_fill, dtype=float)
+        synth_close.loc[first_actual_date] = df.loc[first_actual_date, "Close"]
+
+        # Run the backward compounding loop
+        for i in range(len(dates_to_fill) - 1, 0, -1):
+            curr_date = dates_to_fill[i]
+            prev_date = dates_to_fill[i-1]
+            r = synth_returns.loc[curr_date]
+            if pd.isna(r):
+                synth_close.loc[prev_date] = synth_close.loc[curr_date]
+            else:
+                synth_close.loc[prev_date] = synth_close.loc[curr_date] / (1.0 + r)
+
+        # Create a new DataFrame for synthetic historical period
+        synth_dates = dates_to_fill[dates_to_fill < first_actual_date]
+        
+        if len(synth_dates) > 0:
+            synth_df = pd.DataFrame(index=synth_dates)
+            synth_df["Close"] = synth_close.loc[synth_dates]
+            synth_df["Open"] = synth_close.loc[synth_dates]
+            synth_df["High"] = synth_close.loc[synth_dates]
+            synth_df["Low"] = synth_close.loc[synth_dates]
+            synth_df["Volume"] = 0.0
+
+            # Combine synthetic history and actual data
+            actual_df = df.loc[df.index >= first_actual_date]
+            combined_df = pd.concat([synth_df, actual_df]).sort_index()
+            ticker_data[ticker] = combined_df
+            print(f"    {ticker} total rows after backfill: {len(combined_df)}")
+        else:
+            print(f"    No backfill needed for {ticker}")
 
     # Combine into a single DataFrame with MultiIndex columns
     price_cols = ["Open", "High", "Low", "Close", "Volume"]
@@ -221,6 +302,10 @@ def load_all_data(force_refresh=False):
     # Normalize indexes to date-only for matching
     close_prices.index = pd.to_datetime(close_prices.index).normalize()
     vix_data.index = pd.to_datetime(vix_data.index).normalize()
+
+    # Align VIX data to close prices (backfilling pre-1990 with 19.0)
+    vix_data = vix_data.reindex(close_prices.index)
+    vix_data["VIX_Close"] = vix_data["VIX_Close"].ffill().fillna(19.0)
 
     common_dates = close_prices.index.intersection(vix_data.index)
     close_prices = close_prices.loc[common_dates]

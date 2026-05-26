@@ -641,12 +641,14 @@
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 0.85rem; color: var(--text-muted);">Preset:</span>
                         <select id="date-preset" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer; transition: var(--transition);">
-                            <option value="all">Full History</option>
+                            <option value="all">Full History (1985 - 2026)</option>
                             <option value="last10">Last 10 Years</option>
                             <option value="last5">Last 5 Years</option>
                             <option value="covid">Covid Cycle (2020 - 2022)</option>
                             <option value="tech_rally">Recent Tech Rally (2023 - 2026)</option>
                             <option value="bear_defense">2022 Bear Market</option>
+                            <option value="gfc">Financial Crisis (2007 - 2009)</option>
+                            <option value="dotcom">Dot-com Crash (2000 - 2002)</option>
                             <option value="custom" disabled>Custom Range</option>
                         </select>
                     </div>
@@ -2031,6 +2033,12 @@
         } else if (preset === 'bear_defense') {
             startStr = '2022-01-01';
             endStr = '2022-12-31';
+        } else if (preset === 'gfc') {
+            startStr = '2007-10-01';
+            endStr = '2009-03-31';
+        } else if (preset === 'dotcom') {
+            startStr = '2000-03-01';
+            endStr = '2002-10-31';
         }
         
         if (startStr < first.start_date) startStr = first.start_date;
