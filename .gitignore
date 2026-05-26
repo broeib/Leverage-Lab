@@ -1,0 +1,14 @@
+# Environments
+venv/
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# OS Files
+.DS_Store
+
+# Large datasets & raw cache
+data/etf_prices.csv
+data/vix_data.csv
