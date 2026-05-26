@@ -661,6 +661,16 @@
                         <input type="date" id="end-date" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none;">
                     </div>
                     
+                    <!-- Capital Inputs -->
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Starting Cash:</span>
+                        <input type="number" id="starting-cash" value="0" min="0" step="1000" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; width: 100px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Weekly DCA:</span>
+                        <input type="number" id="weekly-dca" value="5000" min="0" step="50" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; width: 90px;">
+                    </div>
+                    
                     <button class="chart-btn active" onclick="applyCustomDateFilter()" style="background: var(--accent-1); border: none; color: #0a0e1a; font-weight: 600; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Apply Filter</button>
                     <button class="chart-btn" onclick="resetDateFilter()">Reset</button>
                 </div>
@@ -939,6 +949,9 @@
     function runSimulation(startStr, endStr) {
         if (!DATA) return;
 
+        const startingCash = parseFloat(document.getElementById('starting-cash').value) || 0.0;
+        const userWeeklyDca = parseFloat(document.getElementById('weekly-dca').value) || 0.0;
+
         const summaryList = [];
         const equityCurves = {};
         const drawdownCurves = {};
@@ -969,12 +982,11 @@
             const recInvested = [];
             const recDrawdowns = [];
 
-            const initialContribution = 5000.0;
             let peakValue = 0.0;
 
-            // Day 0: Start with $5,000 contribution
-            let currentInvested = initialContribution;
-            let currentValue = initialContribution;
+            // Day 0: Start with startingCash + first weekly contribution
+            let currentInvested = startingCash + userWeeklyDca;
+            let currentValue = startingCash + userWeeklyDca;
             recValues.push(currentValue);
             recInvested.push(currentInvested);
             peakValue = currentValue;
@@ -987,6 +999,7 @@
                 const prevOrigInvested = origEquity.invested[prevOrigIdx];
                 const currOrigInvested = origEquity.invested[origIdx];
                 const C_t = Math.max(0.0, currOrigInvested - prevOrigInvested);
+                const actual_C_t = C_t > 0.0 ? userWeeklyDca : 0.0;
 
                 const prevOrigValue = origEquity.values[prevOrigIdx];
                 const currOrigValue = origEquity.values[origIdx];
@@ -996,8 +1009,8 @@
                     F_t = (currOrigValue - C_t) / prevOrigValue;
                 }
 
-                currentValue = currentValue * F_t + C_t;
-                currentInvested += C_t;
+                currentValue = currentValue * F_t + actual_C_t;
+                currentInvested += actual_C_t;
 
                 if (currentValue > peakValue) {
                     peakValue = currentValue;
@@ -1977,6 +1990,8 @@
         document.getElementById('start-date').value = minDate;
         document.getElementById('end-date').value = maxDate;
         document.getElementById('date-preset').value = 'all';
+        document.getElementById('starting-cash').value = '0';
+        document.getElementById('weekly-dca').value = '5000';
         
         updateDashboard(minDate, maxDate);
     }
@@ -2058,13 +2073,16 @@
         const C = pre.C;
         const F = pre.F;
         
-        let currentValue = 5000.0;
-        let totalInvested = 5000.0;
-        let peakValue = 5000.0;
+        const startingCash = parseFloat(document.getElementById('starting-cash').value) || 0.0;
+        const userWeeklyDca = parseFloat(document.getElementById('weekly-dca').value) || 0.0;
+        
+        let currentValue = startingCash + userWeeklyDca;
+        let totalInvested = startingCash + userWeeklyDca;
+        let peakValue = currentValue;
         let maxDD = 0.0;
         
         for (let t = startIndex + 1; t <= endIndex; t++) {
-            const cashContribution = C[t];
+            const cashContribution = C[t] > 0.0 ? userWeeklyDca : 0.0;
             currentValue = currentValue * F[t] + cashContribution;
             totalInvested += cashContribution;
             
