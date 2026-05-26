@@ -7,6 +7,7 @@ from strategies.macd_trend import MACDTrendStrategy
 from strategies.drawdown_dynamic import DrawdownDynamicStrategy
 from strategies.composite_signal import CompositeSignalStrategy
 from strategies.tactical_cash import TacticalCashStrategy
+from strategies.enhanced_sma import EnhancedSMATrendStrategy
 from strategies.benchmarks import (
     BuyHoldQQQ,
     BuyHoldQLD,
@@ -23,6 +24,7 @@ ALL_STRATEGIES = [
     DrawdownDynamicStrategy,
     CompositeSignalStrategy,
     TacticalCashStrategy,
+    EnhancedSMATrendStrategy,
 ]
 
 ALL_BENCHMARKS = [

@@ -216,6 +216,11 @@ class Backtester:
             if any(p <= 0 for p in prices.values()):
                 continue
 
+            # Apply weekly yield on any CASH held in the portfolio from the previous week
+            if i > 0 and portfolio.shares["CASH"] > 0:
+                weekly_yield = 0.045 / 52.0  # 4.5% annual interest yield
+                portfolio.shares["CASH"] *= (1.0 + weekly_yield)
+
             # Inject CASH with a fixed price of 1.0
             prices["CASH"] = 1.0
 
