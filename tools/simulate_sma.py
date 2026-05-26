@@ -29,8 +29,8 @@ def run_simulation():
     
     # 2. Calculate Indicators
     print("Calculating 50-day and 200-day Simple Moving Averages...")
-    sma_50 = qqq.rolling(window=50).mean()
-    sma_200 = qqq.rolling(window=200).mean()
+    sma_50 = qqq.rolling(window=50, min_periods=50).mean()
+    sma_200 = qqq.rolling(window=200, min_periods=200).mean()
     
     # Combine into a single clean DataFrame
     sim_df = pd.DataFrame({

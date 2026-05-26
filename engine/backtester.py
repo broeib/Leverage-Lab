@@ -32,24 +32,26 @@ class BacktestResult:
         end_date = h.index[-1]
         years = (end_date - start_date).days / 365.25
 
-        # CAGR — for DCA strategies, we use a money-weighted approximation
-        # We use the ratio of final value to total invested, adjusted by the
-        # average time money has been invested
+        # CAGR — use value-per-dollar growth over the full period.
+        # value_per_dollar = total_value / total_invested, starting at 1.0.
+        # This correctly measures per-dollar investment performance for DCA.
         if years > 0 and total_invested > 0:
-            # Average investment age: weight each contribution by its time in market
-            # Approximate: average contribution is invested for half the period
-            cagr = ((total_value / total_invested) ** (1 / (years * 0.5)) - 1) * 100
+            vpd_start = h["value_per_dollar"].iloc[0]
+            vpd_end = h["value_per_dollar"].iloc[-1]
+            if vpd_start > 0:
+                cagr = ((vpd_end / vpd_start) ** (1 / years) - 1) * 100
+            else:
+                cagr = 0.0
             # Cap CAGR at reasonable levels for display
             cagr = min(cagr, 999.9)
         else:
             cagr = 0.0
 
-        # Weekly returns for risk metrics
-        weekly_values = h["total_value"]
-        # Only compute returns after we have meaningful portfolio values
-        meaningful = weekly_values[weekly_values > 0]
+        # Weekly returns for risk metrics — use value_per_dollar to remove
+        # the distorting effect of DCA cash contributions on return calculations
+        vpd_series = h["value_per_dollar"]
+        meaningful = vpd_series[vpd_series > 0]
         if len(meaningful) > 1:
-            # Use portfolio growth rate (value change / previous value) as return proxy
             weekly_returns = meaningful.pct_change().dropna()
             weekly_returns = weekly_returns.replace([np.inf, -np.inf], np.nan).dropna()
         else:
@@ -61,8 +63,8 @@ class BacktestResult:
         else:
             volatility = 0.0
 
-        # Max drawdown
-        max_drawdown = h["drawdown_pct"].max() if "drawdown_pct" in h.columns else 0.0
+        # Max drawdown (per-dollar basis, not masked by DCA inflows)
+        max_drawdown = h["drawdown_pct_per_dollar"].max() if "drawdown_pct_per_dollar" in h.columns else 0.0
 
         # Sharpe ratio (annualized, assuming ~4% risk-free rate)
         risk_free_weekly = 0.04 / 52
@@ -72,11 +74,13 @@ class BacktestResult:
         else:
             sharpe = 0.0
 
-        # Sortino ratio (only downside deviation)
+        # Sortino ratio (standard downside deviation)
         if len(weekly_returns) > 1:
-            downside = weekly_returns[weekly_returns < risk_free_weekly]
-            if len(downside) > 0 and downside.std() > 0:
-                sortino = ((weekly_returns.mean() - risk_free_weekly) / downside.std()) * np.sqrt(52)
+            excess = weekly_returns - risk_free_weekly
+            downside_diffs = np.minimum(excess, 0)
+            downside_deviation = np.sqrt(np.mean(downside_diffs**2))
+            if downside_deviation > 0:
+                sortino = ((weekly_returns.mean() - risk_free_weekly) / downside_deviation) * np.sqrt(52)
             else:
                 sortino = float("inf") if weekly_returns.mean() > risk_free_weekly else 0.0
         else:

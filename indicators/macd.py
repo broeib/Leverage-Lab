@@ -20,8 +20,8 @@ def compute_macd(
     Returns:
         tuple: (macd_line, signal_line, histogram) as pd.Series.
     """
-    ema_fast = prices.ewm(span=fast_period, adjust=False).mean()
-    ema_slow = prices.ewm(span=slow_period, adjust=False).mean()
+    ema_fast = prices.ewm(span=fast_period, min_periods=fast_period, adjust=False).mean()
+    ema_slow = prices.ewm(span=slow_period, min_periods=slow_period, adjust=False).mean()
 
     macd_line = ema_fast - ema_slow
     signal_line = macd_line.ewm(span=signal_period, adjust=False).mean()

@@ -19,6 +19,9 @@ class PortfolioSnapshot:
     weekly_contribution: float
     peak_value: float
     drawdown_pct: float
+    value_per_dollar: float          # total_value / total_invested
+    peak_value_per_dollar: float     # peak of value_per_dollar
+    drawdown_pct_per_dollar: float   # drawdown on per-dollar basis
 
 
 class Portfolio:
@@ -37,6 +40,7 @@ class Portfolio:
         self.shares: Dict[str, float] = {t: 0.0 for t in self.TICKERS}
         self.total_invested: float = 0.0
         self.peak_value: float = 0.0
+        self.peak_value_per_dollar: float = 0.0
         self.history: List[PortfolioSnapshot] = []
 
     def get_value(self, prices: Dict[str, float]) -> float:
@@ -55,11 +59,28 @@ class Portfolio:
         return {t: (self.shares[t] * prices[t]) / total for t in self.TICKERS}
 
     def get_drawdown_pct(self, prices: Dict[str, float]) -> float:
-        """Calculate current drawdown percentage from peak."""
+        """Calculate current drawdown percentage from peak (absolute value basis)."""
         current = self.get_value(prices)
         if self.peak_value == 0:
             return 0.0
         return max(0.0, (self.peak_value - current) / self.peak_value * 100.0)
+
+    def get_value_per_dollar(self, prices: Dict[str, float]) -> float:
+        """Calculate value per dollar invested (portfolio efficiency)."""
+        if self.total_invested <= 0:
+            return 0.0
+        return self.get_value(prices) / self.total_invested
+
+    def get_drawdown_pct_per_dollar(self, prices: Dict[str, float]) -> float:
+        """Calculate drawdown on a per-dollar-invested basis.
+
+        This removes the masking effect of DCA contributions on drawdown,
+        giving a true picture of investment performance decline from peak.
+        """
+        vpd = self.get_value_per_dollar(prices)
+        if self.peak_value_per_dollar <= 0:
+            return 0.0
+        return max(0.0, (self.peak_value_per_dollar - vpd) / self.peak_value_per_dollar * 100.0)
 
     def get_state(self, prices: Dict[str, float]) -> dict:
         """Get current portfolio state for strategy consumption."""
@@ -67,8 +88,10 @@ class Portfolio:
         return {
             "total_value": total,
             "peak_value": self.peak_value,
-            "drawdown_pct": self.get_drawdown_pct(prices),
+            "drawdown_pct": self.get_drawdown_pct_per_dollar(prices),
             "total_invested": self.total_invested,
+            "value_per_dollar": self.get_value_per_dollar(prices),
+            "peak_value_per_dollar": self.peak_value_per_dollar,
         }
 
     def rebalance(
@@ -101,10 +124,14 @@ class Portfolio:
             else:
                 self.shares[ticker] = 0.0
 
-        # Update peak
+        # Update peaks (both absolute and per-dollar)
         new_value = self.get_value(prices)
         if new_value > self.peak_value:
             self.peak_value = new_value
+
+        vpd = self.get_value_per_dollar(prices)
+        if vpd > self.peak_value_per_dollar:
+            self.peak_value_per_dollar = vpd
 
     def record_snapshot(self, date: pd.Timestamp, prices: Dict[str, float],
                         contribution: float = 0.0) -> PortfolioSnapshot:
@@ -121,6 +148,7 @@ class Portfolio:
         total = self.get_value(prices)
         values = self.get_values_by_ticker(prices)
         alloc = self.get_allocation_pct(prices)
+        vpd = self.get_value_per_dollar(prices)
 
         snapshot = PortfolioSnapshot(
             date=date,
@@ -132,7 +160,10 @@ class Portfolio:
             allocation_pct=alloc,
             weekly_contribution=contribution,
             peak_value=self.peak_value,
-            drawdown_pct=self.get_drawdown_pct(prices),
+            drawdown_pct=self.get_drawdown_pct_per_dollar(prices),
+            value_per_dollar=vpd,
+            peak_value_per_dollar=self.peak_value_per_dollar,
+            drawdown_pct_per_dollar=self.get_drawdown_pct_per_dollar(prices),
         )
         self.history.append(snapshot)
         return snapshot
@@ -150,6 +181,9 @@ class Portfolio:
                 "total_invested": snap.total_invested,
                 "peak_value": snap.peak_value,
                 "drawdown_pct": snap.drawdown_pct,
+                "value_per_dollar": snap.value_per_dollar,
+                "peak_value_per_dollar": snap.peak_value_per_dollar,
+                "drawdown_pct_per_dollar": snap.drawdown_pct_per_dollar,
                 "weekly_contribution": snap.weekly_contribution,
                 "QQQ_value": snap.values.get("QQQ", 0),
                 "QLD_value": snap.values.get("QLD", 0),

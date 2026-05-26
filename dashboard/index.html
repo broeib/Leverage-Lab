@@ -982,14 +982,14 @@
             const recInvested = [];
             const recDrawdowns = [];
 
-            let peakValue = 0.0;
+            let peakVpd = 0.0;
 
             // Day 0: Start with startingCash + first weekly contribution
             let currentInvested = startingCash + userWeeklyDca;
             let currentValue = startingCash + userWeeklyDca;
             recValues.push(currentValue);
             recInvested.push(currentInvested);
-            peakValue = currentValue;
+            peakVpd = currentInvested > 0 ? currentValue / currentInvested : 0;
             recDrawdowns.push(0.0);
 
             for (let k = 1; k < recDates.length; k++) {
@@ -1012,11 +1012,13 @@
                 currentValue = currentValue * F_t + actual_C_t;
                 currentInvested += actual_C_t;
 
-                if (currentValue > peakValue) {
-                    peakValue = currentValue;
+                // Track drawdown on per-dollar-invested basis (not masked by DCA)
+                const vpd = currentInvested > 0 ? currentValue / currentInvested : 0;
+                if (vpd > peakVpd) {
+                    peakVpd = vpd;
                 }
 
-                const dd = peakValue > 0 ? ((peakValue - currentValue) / peakValue) * 100.0 : 0.0;
+                const dd = peakVpd > 0 ? ((peakVpd - vpd) / peakVpd) * 100.0 : 0.0;
 
                 recValues.push(parseFloat(currentValue.toFixed(2)));
                 recInvested.push(parseFloat(currentInvested.toFixed(2)));
@@ -1044,16 +1046,22 @@
             const endD = new Date(recDates[recDates.length - 1]);
             const years = Math.max(0.01, (endD - startD) / (365.25 * 24 * 60 * 60 * 1000));
 
+            // CAGR: use value-per-dollar growth over the full period
             let cagr = 0.0;
-            if (years > 0 && totalInvested > 0) {
-                cagr = (Math.pow(finalValue / totalInvested, 1.0 / (years * 0.5)) - 1.0) * 100.0;
+            if (years > 0 && totalInvested > 0 && recInvested[0] > 0) {
+                const vpdStart = recValues[0] / recInvested[0];
+                const vpdEnd = finalValue / totalInvested;
+                cagr = vpdStart > 0 ? (Math.pow(vpdEnd / vpdStart, 1.0 / years) - 1.0) * 100.0 : 0.0;
                 cagr = Math.min(999.9, Math.max(-99.9, cagr));
             }
 
+            // Weekly returns: use value-per-dollar to remove DCA contribution distortion
             const weeklyReturns = [];
             for (let i = 1; i < recValues.length; i++) {
-                if (recValues[i-1] > 0) {
-                    const r = (recValues[i] / recValues[i-1]) - 1.0;
+                const vpdPrev = recInvested[i-1] > 0 ? recValues[i-1] / recInvested[i-1] : 0;
+                const vpdCurr = recInvested[i] > 0 ? recValues[i] / recInvested[i] : 0;
+                if (vpdPrev > 0) {
+                    const r = (vpdCurr / vpdPrev) - 1.0;
                     if (isFinite(r)) {
                         weeklyReturns.push(r);
                     }
@@ -1078,20 +1086,22 @@
                 }
             }
 
+            // Sortino ratio (standard downside deviation)
             let sortino = 0.0;
             if (weeklyReturns.length > 1) {
                 const mean = weeklyReturns.reduce((a, b) => a + b, 0) / weeklyReturns.length;
                 const excessMean = mean - riskFreeWeekly;
-                const downside = weeklyReturns.filter(r => r < riskFreeWeekly);
-                if (downside.length > 1) {
-                    const d_s = std(downside);
-                    if (d_s > 0) {
-                        sortino = (excessMean / d_s) * Math.sqrt(52);
-                    } else {
-                        sortino = excessMean > 0 ? 99.99 : 0.0;
+                // Standard downside deviation: sqrt(mean(min(r - rf, 0)^2))
+                let sumSquaredDownside = 0.0;
+                for (let i = 0; i < weeklyReturns.length; i++) {
+                    const diff = weeklyReturns[i] - riskFreeWeekly;
+                    if (diff < 0) {
+                        sumSquaredDownside += diff * diff;
                     }
-                } else if (downside.length === 1) {
-                    sortino = excessMean > 0 ? 99.99 : 0.0;
+                }
+                const downsideDev = Math.sqrt(sumSquaredDownside / weeklyReturns.length);
+                if (downsideDev > 0) {
+                    sortino = (excessMean / downsideDev) * Math.sqrt(52);
                 } else {
                     sortino = excessMean > 0 ? 99.99 : 0.0;
                 }
@@ -2078,7 +2088,7 @@
         
         let currentValue = startingCash + userWeeklyDca;
         let totalInvested = startingCash + userWeeklyDca;
-        let peakValue = currentValue;
+        let peakVpd = totalInvested > 0 ? currentValue / totalInvested : 0;
         let maxDD = 0.0;
         
         for (let t = startIndex + 1; t <= endIndex; t++) {
@@ -2086,10 +2096,12 @@
             currentValue = currentValue * F[t] + cashContribution;
             totalInvested += cashContribution;
             
-            if (currentValue > peakValue) {
-                peakValue = currentValue;
+            // Track drawdown on per-dollar-invested basis (not masked by DCA)
+            const vpd = totalInvested > 0 ? currentValue / totalInvested : 0;
+            if (vpd > peakVpd) {
+                peakVpd = vpd;
             }
-            const dd = peakValue > 0 ? ((peakValue - currentValue) / peakValue) * 100.0 : 0.0;
+            const dd = peakVpd > 0 ? ((peakVpd - vpd) / peakVpd) * 100.0 : 0.0;
             if (dd > maxDD) {
                 maxDD = dd;
             }
