@@ -1174,7 +1174,7 @@
         document.getElementById('statCount').textContent = allNames.length;
 
         const bestReturn = Math.max(...SIMULATION_RESULTS.summary.map(s => s.total_return_pct));
-        document.getElementById('statBestReturn').textContent = `${bestReturn.toFixed(1)}%`;
+        document.getElementById('statBestReturn').textContent = `${bestReturn.toFixed(2)}%`;
 
         // 3. Update Awards
         renderAwards(SIMULATION_RESULTS.summary);
@@ -1282,7 +1282,7 @@
             <div class="best-card return">
                 <div class="award">🚀 Highest Return</div>
                 <div class="strat-name">${bestReturn.Strategy}</div>
-                <div class="strat-value" style="color: var(--cyan)">${bestReturn.total_return_pct.toFixed(1)}%</div>
+                <div class="strat-value" style="color: var(--cyan)">${bestReturn.total_return_pct.toFixed(2)}%</div>
                 <div class="strat-label">$${Number(bestReturn.total_value.toFixed(0)).toLocaleString()} final value</div>
             </div>
             <div class="best-card sharpe">
@@ -1294,7 +1294,7 @@
             <div class="best-card drawdown">
                 <div class="award">🛡️ Lowest Drawdown</div>
                 <div class="strat-name">${bestDrawdown.Strategy}</div>
-                <div class="strat-value" style="color: var(--accent-3)">${bestDrawdown.max_drawdown_pct.toFixed(1)}%</div>
+                <div class="strat-value" style="color: var(--accent-3)">${bestDrawdown.max_drawdown_pct.toFixed(2)}%</div>
                 <div class="strat-label">Max Drawdown</div>
             </div>
             <div class="best-card calmar">
@@ -1401,14 +1401,14 @@
                         break;
                     case 'pct_color':
                         cls = val >= 0 ? 'positive' : 'negative';
-                        display = `${val >= 0 ? '+' : ''}${val.toFixed(1)}%`;
+                        display = `${val >= 0 ? '+' : ''}${val.toFixed(2)}%`;
                         break;
                     case 'pct_neg':
                         cls = 'negative';
-                        display = `-${Math.abs(val).toFixed(1)}%`;
+                        display = `-${Math.abs(val).toFixed(2)}%`;
                         break;
                     case 'pct':
-                        display = `${val.toFixed(1)}%`;
+                        display = `${val.toFixed(2)}%`;
                         break;
                     case 'num3':
                         display = val.toFixed(3);
