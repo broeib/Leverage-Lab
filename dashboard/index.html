@@ -1101,13 +1101,13 @@
                 cagr = Math.min(999.9, Math.max(-99.9, cagr));
             }
 
-            // Weekly returns: use value-per-dollar to remove DCA contribution distortion
+            // Weekly returns: mathematically correct Time-Weighted weekly returns
             const weeklyReturns = [];
             for (let i = 1; i < recValues.length; i++) {
-                const vpdPrev = recInvested[i-1] > 0 ? recValues[i-1] / recInvested[i-1] : 0;
-                const vpdCurr = recInvested[i] > 0 ? recValues[i] / recInvested[i] : 0;
-                if (vpdPrev > 0) {
-                    const r = (vpdCurr / vpdPrev) - 1.0;
+                const prevVal = recValues[i-1];
+                if (prevVal > 0) {
+                    const actual_C_t = recInvested[i] - recInvested[i-1];
+                    const r = (recValues[i] - actual_C_t - prevVal) / prevVal;
                     if (isFinite(r)) {
                         weeklyReturns.push(r);
                     }

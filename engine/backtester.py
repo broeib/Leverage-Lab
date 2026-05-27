@@ -47,12 +47,20 @@ class BacktestResult:
         else:
             cagr = 0.0
 
-        # Weekly returns for risk metrics — use value_per_dollar to remove
-        # the distorting effect of DCA cash contributions on return calculations
-        vpd_series = h["value_per_dollar"]
-        meaningful = vpd_series[vpd_series > 0]
-        if len(meaningful) > 1:
-            weekly_returns = meaningful.pct_change().dropna()
+        # Weekly returns for risk metrics — mathematically correct Time-Weighted weekly returns:
+        # r_t = (total_value_t - contribution_t - total_value_t-1) / total_value_t-1
+        total_values = h["total_value"]
+        contributions = h["weekly_contribution"]
+        
+        weekly_returns_list = []
+        for idx in range(1, len(h)):
+            prev_val = total_values.iloc[idx - 1]
+            if prev_val > 0:
+                r_t = (total_values.iloc[idx] - contributions.iloc[idx] - prev_val) / prev_val
+                weekly_returns_list.append(r_t)
+        
+        if len(weekly_returns_list) > 1:
+            weekly_returns = pd.Series(weekly_returns_list, dtype=float)
             weekly_returns = weekly_returns.replace([np.inf, -np.inf], np.nan).dropna()
         else:
             weekly_returns = pd.Series(dtype=float)
