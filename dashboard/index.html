@@ -841,8 +841,8 @@
                         <button class="chart-btn" onclick="updateRollingHorizon(10)">10-Year Horizon</button>
                     </div>
                     <div style="margin-top: 14px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
-                        Simulates starting a rebalancing strategy from $0 with a $5,000 weekly investment across every single historical start date since 2010. 
-                        <strong>Win Rate vs QQQ (1x)</strong> represents the probability that the strategy outperformed index DCA over the selected timeframe.
+                        Simulates starting a rebalancing strategy from $0 with a $5,000 weekly investment across every single historical start date since <span id="horizonStartYear">2010</span>. 
+                        <strong>Win Rate vs <span id="labelWinRateVS">QQQ (1x)</span></strong> represents the probability that the strategy outperformed index DCA over the selected timeframe.
                     </div>
                 </div>
 
@@ -865,7 +865,7 @@
                             <thead>
                                 <tr>
                                     <th>Strategy</th>
-                                    <th>Win Rate vs QQQ</th>
+                                    <th id="thWinRate">Win Rate vs QQQ</th>
                                     <th>Avg Return %</th>
                                     <th>Median Return %</th>
                                     <th>Best Horizon</th>
@@ -1325,6 +1325,7 @@
         if (!UNIVERSE_META) return;
         const t = UNIVERSE_META.tickers;
         const key = UNIVERSE_META.key;
+        const startYear = UNIVERSE_META.start_date.substring(0, 4);
 
         // Update title
         const titleEl = document.getElementById('heroTitle');
@@ -1339,6 +1340,24 @@
         // Update subtitle
         const subtitleEl = document.getElementById('heroSubtitle');
         subtitleEl.textContent = `Backtesting leveraged ETF rebalancing strategies across ${t['1x']} (1x), ${t['2x']} (2x), and ${t['3x']} (3x) with $5,000 weekly dollar-cost averaging.`;
+
+        // Update horizon start year description
+        const hYearEl = document.getElementById('horizonStartYear');
+        if (hYearEl) {
+            hYearEl.textContent = startYear;
+        }
+
+        // Update horizon win rate description label
+        const wrEl = document.getElementById('labelWinRateVS');
+        if (wrEl) {
+            wrEl.textContent = `${t['1x']} (1x)`;
+        }
+
+        // Update horizon table header
+        const thEl = document.getElementById('thWinRate');
+        if (thEl) {
+            thEl.textContent = `Win Rate vs ${t['1x']}`;
+        }
     }
 
     function initDashboard() {
