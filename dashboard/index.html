@@ -1235,7 +1235,8 @@
     // =========================================================================
 
     async function loadData() {
-        await loadUniverse('qqq');
+        const savedUniverse = localStorage.getItem('activeUniverse') || 'qqq';
+        await loadUniverse(savedUniverse);
         initUniverseToggle();
     }
 
@@ -1253,6 +1254,7 @@
             }
 
             ACTIVE_UNIVERSE = universeKey;
+            localStorage.setItem('activeUniverse', universeKey);
             UNIVERSE_META = DATA.universe || null;
 
             // Update BENCHMARK_NAMES from real ticker names in the data
@@ -1300,6 +1302,12 @@
     function initUniverseToggle() {
         const toggle = document.getElementById('universeToggle');
         toggle.querySelectorAll('button').forEach(btn => {
+            // Apply initial active state based on ACTIVE_UNIVERSE
+            if (btn.dataset.universe === ACTIVE_UNIVERSE) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
             btn.addEventListener('click', async () => {
                 const key = btn.dataset.universe;
                 if (key === ACTIVE_UNIVERSE) return;
@@ -2408,8 +2416,8 @@
             const row = horizonSummary[idx];
             const returns = row.returns;
             const drawdowns = row.drawdowns;
-            const qqqIdx = allNames.indexOf("Buy & Hold QQQ (1x)");
-            const qqqReturns = horizonSummary[qqqIdx].returns;
+            const qqqIdx = allNames.indexOf(BENCHMARK_NAMES[0]);
+            const qqqReturns = qqqIdx !== -1 ? horizonSummary[qqqIdx].returns : [];
 
             const sortedReturns = [...returns].sort((a, b) => a - b);
             const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
@@ -2427,9 +2435,9 @@
 
             let wins = 0;
             for (let i = 0; i < returns.length; i++) {
-                if (returns[i] > qqqReturns[i]) wins++;
+                if (qqqReturns.length > 0 && returns[i] > qqqReturns[i]) wins++;
             }
-            const winRateVsQQQ = (wins / returns.length) * 100.0;
+            const winRateVsQQQ = qqqReturns.length > 0 ? (wins / returns.length) * 100.0 : 0.0;
 
             return {
                 Strategy: name,
