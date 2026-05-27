@@ -11,4 +11,8 @@ __pycache__/
 
 # Large datasets & raw cache
 data/etf_prices.csv
+data/etf_prices_*.csv
 data/vix_data.csv
+
+# Scratch work
+scratch/
