@@ -579,6 +579,40 @@
             border-radius: 20px;
             text-align: center;
         }
+
+        /* Universe Toggle */
+        .universe-toggle {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 4px;
+            gap: 4px;
+            margin-bottom: 18px;
+        }
+        .universe-toggle button {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 9px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            background: transparent;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .universe-toggle button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-secondary);
+        }
+        .universe-toggle button.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.2));
+            color: var(--text-primary);
+            box-shadow: 0 2px 12px rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(129, 140, 248, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -586,8 +620,12 @@
     <!-- Hero Header -->
     <header class="hero">
         <div class="hero-content">
-            <h1>QQQ Leverage Lab</h1>
-            <p class="subtitle">
+            <div class="universe-toggle" id="universeToggle">
+                <button class="active" data-universe="qqq">📈 NASDAQ-100 &nbsp;(QQQ / QLD / TQQQ)</button>
+                <button data-universe="soxx">🔬 Semiconductors &nbsp;(SOXX / USD / SOXL)</button>
+            </div>
+            <h1 id="heroTitle">Leverage Lab</h1>
+            <p class="subtitle" id="heroSubtitle">
                 Backtesting leveraged ETF rebalancing strategies across QQQ (1x), QLD (2x), and TQQQ (3x)
                 with $5,000 weekly dollar-cost averaging.
             </p>
@@ -908,12 +946,18 @@
         '#e879f9',
     ];
 
-    const BENCHMARK_NAMES = [
+    // Dynamic — updated when universe is loaded
+    let BENCHMARK_NAMES = [
         'Buy & Hold QQQ (1x)',
         'Buy & Hold QLD (2x)',
         'Buy & Hold TQQQ (3x)',
         'Equal Weight (33/33/33)',
     ];
+
+    // Universe state
+    let ACTIVE_UNIVERSE = 'qqq';
+    let UNIVERSE_META = null; // populated from JSON "universe" key
+    let UNIVERSE_DATA_CACHE = {}; // caches loaded JSON per universe key
 
     let DATA = null;
     let equityChart = null;
@@ -1191,11 +1235,53 @@
     // =========================================================================
 
     async function loadData() {
+        await loadUniverse('qqq');
+        initUniverseToggle();
+    }
+
+    async function loadUniverse(universeKey) {
         try {
-            const response = await fetch('../results/dashboard_data.json');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            DATA = await response.json();
+            document.getElementById('loadingState').style.display = 'flex';
+
+            if (UNIVERSE_DATA_CACHE[universeKey]) {
+                DATA = UNIVERSE_DATA_CACHE[universeKey];
+            } else {
+                const response = await fetch(`../results/dashboard_data_${universeKey}.json`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                DATA = await response.json();
+                UNIVERSE_DATA_CACHE[universeKey] = DATA;
+            }
+
+            ACTIVE_UNIVERSE = universeKey;
+            UNIVERSE_META = DATA.universe || null;
+
+            // Update BENCHMARK_NAMES from real ticker names in the data
+            if (UNIVERSE_META) {
+                const t = UNIVERSE_META.tickers;
+                BENCHMARK_NAMES = [
+                    `Buy & Hold ${t['1x']} (1x)`,
+                    `Buy & Hold ${t['2x']} (2x)`,
+                    `Buy & Hold ${t['3x']} (3x)`,
+                    'Equal Weight (33/33/33)',
+                ];
+            }
+
+            // Update hero UI
+            updateHeroForUniverse();
+
             document.getElementById('loadingState').style.display = 'none';
+
+            // Destroy existing charts
+            if (equityChart) { equityChart.destroy(); equityChart = null; }
+            if (drawdownChart) { drawdownChart.destroy(); drawdownChart = null; }
+            if (allocationChart) { allocationChart.destroy(); allocationChart = null; }
+            if (riskReturnChart) { riskReturnChart.destroy(); riskReturnChart = null; }
+            if (sharpeVolChart) { sharpeVolChart.destroy(); sharpeVolChart = null; }
+
+            activeStrategies = new Set();
+            sortCol = null;
+            sortAsc = true;
+
             initDashboard();
         } catch (err) {
             document.getElementById('loadingState').innerHTML = `
@@ -1209,6 +1295,42 @@
                 </div>
             `;
         }
+    }
+
+    function initUniverseToggle() {
+        const toggle = document.getElementById('universeToggle');
+        toggle.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const key = btn.dataset.universe;
+                if (key === ACTIVE_UNIVERSE) return;
+
+                // Update button styling
+                toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                await loadUniverse(key);
+            });
+        });
+    }
+
+    function updateHeroForUniverse() {
+        if (!UNIVERSE_META) return;
+        const t = UNIVERSE_META.tickers;
+        const key = UNIVERSE_META.key;
+
+        // Update title
+        const titleEl = document.getElementById('heroTitle');
+        if (key === 'qqq') {
+            titleEl.textContent = 'Leverage Lab';
+        } else if (key === 'soxx') {
+            titleEl.textContent = 'Leverage Lab — Semiconductors';
+        } else {
+            titleEl.textContent = 'Leverage Lab';
+        }
+
+        // Update subtitle
+        const subtitleEl = document.getElementById('heroSubtitle');
+        subtitleEl.textContent = `Backtesting leveraged ETF rebalancing strategies across ${t['1x']} (1x), ${t['2x']} (2x), and ${t['3x']} (3x) with $5,000 weekly dollar-cost averaging.`;
     }
 
     function initDashboard() {
@@ -1258,7 +1380,17 @@
         document.getElementById('end-date').value = maxDate;
 
         document.getElementById('data-range-label').textContent = `${minDate} to ${maxDate}`;
-        document.getElementById('date-preset').addEventListener('change', handlePresetChange);
+
+        // Update preset label for the universe
+        const presetEl = document.getElementById('date-preset');
+        const allOption = presetEl.querySelector('option[value="all"]');
+        if (allOption && UNIVERSE_META) {
+            const startYear = UNIVERSE_META.start_date.substring(0, 4);
+            allOption.textContent = `Full History (${startYear} - 2026)`;
+        }
+
+        presetEl.removeEventListener('change', handlePresetChange);
+        presetEl.addEventListener('change', handlePresetChange);
     }
 
     // =========================================================================
@@ -1657,7 +1789,7 @@
                         tension: 0,
                     },
                     {
-                        label: 'QQQ (1x)',
+                        label: `${UNIVERSE_META ? UNIVERSE_META.tickers['1x'] : 'QQQ'} (1x)`,
                         data: slicedDates.map((d, i) => ({ x: d, y: alloc.QQQ[j_start + i] * 100 })),
                         borderColor: '#34d399',
                         backgroundColor: 'rgba(52, 211, 153, 0.4)',
@@ -1667,7 +1799,7 @@
                         tension: 0,
                     },
                     {
-                        label: 'QLD (2x)',
+                        label: `${UNIVERSE_META ? UNIVERSE_META.tickers['2x'] : 'QLD'} (2x)`,
                         data: slicedDates.map((d, i) => ({ x: d, y: alloc.QLD[j_start + i] * 100 })),
                         borderColor: '#818cf8',
                         backgroundColor: 'rgba(129, 140, 248, 0.4)',
@@ -1677,7 +1809,7 @@
                         tension: 0,
                     },
                     {
-                        label: 'TQQQ (3x)',
+                        label: `${UNIVERSE_META ? UNIVERSE_META.tickers['3x'] : 'TQQQ'} (3x)`,
                         data: slicedDates.map((d, i) => ({ x: d, y: alloc.TQQQ[j_start + i] * 100 })),
                         borderColor: '#f472b6',
                         backgroundColor: 'rgba(244, 114, 182, 0.4)',
