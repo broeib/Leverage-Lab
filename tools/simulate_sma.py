@@ -855,7 +855,7 @@ def run_simulation():
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <span style="font-size: 0.85rem; color: var(--text-muted);">Preset:</span>
                         <select id="date-preset" style="background: #111827; border: 1px solid var(--border-color); color: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer; transition: border-color 0.2s;">
-                            <option value="all">Full History (2010 - 2026)</option>
+                            <option value="all">Full History (1986 - 2026)</option>
                             <option value="last10">Last 10 Years</option>
                             <option value="last5">Last 5 Years</option>
                             <option value="covid">Covid Cycle (2020 - 2022)</option>
@@ -940,7 +940,7 @@ def run_simulation():
                 </div>
             </div>
             <div class="comp-card">
-                <div class="comp-card-title"> bestätig. Confirmations</div>
+                <div class="comp-card-title">📊 Technical Confirmations</div>
                 <div class="comp-rule-block">
                     <span class="comp-rule-label">Standard SMA Trend</span>
                     <span class="comp-rule-val">None. Leverages fully into TQQQ or QLD solely based on SMA crossover, even in extremely overbought tops or high-stress crash environments.</span>
