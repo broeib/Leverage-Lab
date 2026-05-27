@@ -1361,6 +1361,9 @@
     }
 
     function initDashboard() {
+        // Sort overall summary by performance descending (Total Return %)
+        DATA.summary.sort((a, b) => b.total_return_pct - a.total_return_pct);
+
         const summary = DATA.summary;
         if (!summary || summary.length === 0) return;
 
