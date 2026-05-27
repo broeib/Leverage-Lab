@@ -1388,12 +1388,20 @@
         // Table headers (bind click events once)
         initTableHeaders();
 
-        // Initialize dashboard metrics & table body
-        updateDashboard(minDate, maxDate);
+        // 1. Determine active preset and initialize dashboard (preserving selection if valid)
+        const presetEl = document.getElementById('date-preset');
+        const activePreset = presetEl ? presetEl.value : 'all';
 
-        // Render initial charts using populated SIMULATION_RESULTS
-        initEquityChart(allNames);
-        initDrawdownChart(allNames);
+        if (activePreset && activePreset !== 'all' && activePreset !== 'custom') {
+            // Re-apply the active preset for the new universe (handles updateDashboard internally)
+            handlePresetChange();
+        } else {
+            // Otherwise, reset preset to all and load full history
+            if (presetEl) presetEl.value = 'all';
+            updateDashboard(minDate, maxDate);
+        }
+
+        // 2. Initialize secondary charts (Equity and Drawdown charts are already rendered dynamically by updateDashboard!)
         initAllocationChart(allNames);
         initRiskCharts(SIMULATION_RESULTS.summary);
 
@@ -1414,21 +1422,23 @@
         document.getElementById('end-date').min = minDate;
         document.getElementById('end-date').max = maxDate;
 
-        document.getElementById('start-date').value = minDate;
-        document.getElementById('end-date').value = maxDate;
+        // Update input values to match the active simulation range
+        document.getElementById('start-date').value = ACTIVE_RANGE.start || minDate;
+        document.getElementById('end-date').value = ACTIVE_RANGE.end || maxDate;
 
-        document.getElementById('data-range-label').textContent = `${minDate} to ${maxDate}`;
+        document.getElementById('data-range-label').textContent = `${ACTIVE_RANGE.start || minDate} to ${ACTIVE_RANGE.end || maxDate}`;
 
         // Update preset label for the universe
-        const presetEl = document.getElementById('date-preset');
-        const allOption = presetEl.querySelector('option[value="all"]');
+        const allOption = presetEl ? presetEl.querySelector('option[value="all"]') : null;
         if (allOption && UNIVERSE_META) {
             const startYear = UNIVERSE_META.start_date.substring(0, 4);
             allOption.textContent = `Full History (${startYear} - 2026)`;
         }
 
-        presetEl.removeEventListener('change', handlePresetChange);
-        presetEl.addEventListener('change', handlePresetChange);
+        if (presetEl) {
+            presetEl.removeEventListener('change', handlePresetChange);
+            presetEl.addEventListener('change', handlePresetChange);
+        }
     }
 
     // =========================================================================
@@ -2158,6 +2168,10 @@
             alert("Start date cannot be after end date.");
             return;
         }
+        
+        // Update preset dropdown to custom to prevent out-of-sync presets
+        const presetEl = document.getElementById('date-preset');
+        if (presetEl) presetEl.value = 'custom';
         
         updateDashboard(startStr, endStr);
     }
