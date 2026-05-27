@@ -1226,8 +1226,16 @@
         // 4. Update Table
         renderTableBody();
 
-        // 5. Update Charts
-        updateChartsData();
+        // 5. Re-initialize and sort the charts with the new dynamic sorted allNames
+        initEquityChart(allNames);
+        initDrawdownChart(allNames);
+
+        // 6. Update secondary charts
+        const allocSelect = document.getElementById('allocSelect');
+        if (allocSelect) {
+            updateAllocationChart(allocSelect.value, ACTIVE_RANGE.start, ACTIVE_RANGE.end);
+        }
+        updateRiskCharts(SIMULATION_RESULTS.summary);
     }
 
     // =========================================================================
