@@ -1,0 +1,39 @@
+{
+  "strategies": {
+    "sma_trend": {
+      "default_regime": {
+        "strong": {"QQQ": 0.0, "QLD": 0.0, "TQQQ": 1.0},
+        "mild": {"QQQ": 0.0, "QLD": 1.0, "TQQQ": 0.0},
+        "weak": {"QQQ": 1.0, "QLD": 0.0, "TQQQ": 0.0}
+      }
+    },
+    "rsi_momentum": {
+      "overbought_rsi": 70,
+      "oversold_rsi": 30,
+      "bullish_rsi": 50
+    },
+    "vix_volatility": {
+      "low_fear": 15,
+      "normal_fear": 25,
+      "high_fear": 35
+    },
+    "enhanced_sma": {
+      "sma_200_upper_multiplier": 1.03,
+      "sma_200_lower_multiplier": 0.985,
+      "sma_50_upper_multiplier": 1.02,
+      "sma_50_lower_multiplier": 0.99,
+      "rsi_overbought_threshold": 70.0,
+      "vix_safe_threshold": 25.0
+    }
+  },
+  "universes": {
+    "qqq": {
+      "weekly_contribution": 5000.0,
+      "slippage": 0.0
+    },
+    "soxx": {
+      "weekly_contribution": 5000.0,
+      "slippage": 0.0
+    }
+  }
+}
