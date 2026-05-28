@@ -613,6 +613,402 @@
             box-shadow: 0 2px 12px rgba(99, 102, 241, 0.15);
             border: 1px solid rgba(129, 140, 248, 0.3);
         }
+
+        /* Strategy name link styling in tables */
+        .strategy-name-link {
+            font-weight: 600;
+            color: var(--accent-1);
+            border-bottom: 1px dotted var(--accent-1);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .strategy-name-link:hover {
+            color: var(--accent-2);
+            border-bottom-color: var(--accent-2);
+            text-shadow: 0 0 8px rgba(167, 139, 250, 0.4);
+        }
+
+        /* Definitions tab card layout */
+        .definition-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        .def-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        .def-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-glow);
+            box-shadow: var(--shadow-card), var(--shadow-glow);
+        }
+
+        .def-card-header {
+            margin-bottom: 16px;
+        }
+
+        .def-card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .def-card-tagline {
+            font-size: 0.8rem;
+            color: var(--accent-1);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        .def-card-desc {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .def-card-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .def-badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .def-badge.style {
+            background: rgba(167, 139, 250, 0.15);
+            color: var(--accent-2);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+
+        .def-badge.complexity {
+            background: rgba(96, 165, 250, 0.15);
+            color: var(--blue);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+
+        .def-badge.indicator {
+            background: rgba(52, 211, 153, 0.1);
+            color: var(--green);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .def-card-footer {
+            margin-top: auto;
+            border-top: 1px solid rgba(42, 48, 80, 0.5);
+            padding-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .def-card-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            background: rgba(129, 140, 248, 0.15);
+            color: var(--accent-1);
+            border: 1px solid rgba(129, 140, 248, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .def-card-btn:hover {
+            background: var(--accent-1);
+            color: #0a0e1a;
+            box-shadow: 0 0 12px rgba(129, 140, 248, 0.4);
+        }
+
+        /* Premium Modal Styles */
+        .strat-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 7, 15, 0.82);
+            backdrop-filter: blur(16px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .strat-modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .strat-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), var(--shadow-glow);
+            overflow: hidden;
+            transform: scale(0.95) translateY(10px);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        .strat-modal-overlay.active .strat-modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .strat-modal-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(26, 31, 53, 0.6);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .strat-modal-title-area {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .strat-modal-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .strat-modal-subtitle {
+            font-size: 0.85rem;
+            color: var(--accent-1);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .strat-modal-close {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .strat-modal-close:hover {
+            background: rgba(248, 113, 113, 0.15);
+            color: var(--red);
+            border-color: rgba(248, 113, 113, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .strat-modal-body {
+            padding: 32px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 32px;
+        }
+
+        @media (max-width: 800px) {
+            .strat-modal-body {
+                grid-template-columns: 1fr;
+                padding: 20px;
+                gap: 24px;
+            }
+        }
+
+        .strat-modal-section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(42, 48, 80, 0.5);
+            padding-bottom: 6px;
+        }
+
+        .strat-modal-para {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        /* Allocation visual progress bars */
+        .rule-allocation-row {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+        }
+
+        .rule-condition {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .allocation-bar-container {
+            height: 10px;
+            background: rgba(42, 48, 80, 0.5);
+            border-radius: 5px;
+            display: flex;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .alloc-segment {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .alloc-segment.tqqq { background: var(--gradient-2); }
+        .alloc-segment.qld { background: var(--gradient-1); }
+        .alloc-segment.qqq { background: var(--gradient-3); }
+        .alloc-segment.cash { background: linear-gradient(135deg, #34d399 0%, #059669 100%); }
+
+        .allocation-labels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .allocation-label-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .allocation-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .allocation-dot.tqqq { background: var(--accent-3); }
+        .allocation-dot.qld { background: var(--accent-1); }
+        .allocation-dot.qqq { background: var(--cyan); }
+        .allocation-dot.cash { background: var(--green); }
+
+        /* Performance panels */
+        .modal-perf-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .modal-perf-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .modal-perf-card .label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .modal-perf-card .value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-perf-card.highlight {
+            border-color: rgba(99, 102, 241, 0.4);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .modal-perf-card.highlight .value {
+            color: var(--cyan);
+        }
+
+        /* Pros and Cons lists */
+        .pros-cons-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .pro-con-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .pro-con-item .icon {
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+
+        .pro-con-item.pro { color: var(--text-secondary); }
+        .pro-con-item.pro .icon { color: var(--green); }
+        .pro-con-item.con { color: var(--text-secondary); }
+        .pro-con-item.con .icon { color: var(--red); }
     </style>
 </head>
 <body>
@@ -725,6 +1121,7 @@
             <button class="tab" data-tab="allocation">Allocations</button>
             <button class="tab" data-tab="risk">Risk Analysis</button>
             <button class="tab" data-tab="simulations">Horizon & Regime Analysis</button>
+            <button class="tab" data-tab="definitions">📚 Strategy Guide</button>
         </div>
 
         <!-- Overview Tab -->
@@ -923,6 +1320,23 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Strategy Guide Tab -->
+        <div class="tab-content" id="tab-definitions">
+            <section class="section">
+                <div class="section-header">
+                    <h2>📚 Strategy Guide & Mechanics</h2>
+                    <span class="badge">Definitions</span>
+                </div>
+                <div style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.92rem; max-width: 800px; line-height: 1.5;">
+                    Explore the underlying technical models, operational philosophies, active indicators, and tactical asset allocations behind every strategy in the Leverage Lab suite.
+                    <strong>Click on any card to explore its detailed conditional rules and see its live performance in the active backtest cycle.</strong>
+                </div>
+                <div class="definition-grid" id="definitionGrid">
+                    <!-- Cards populated dynamically via JavaScript -->
                 </div>
             </section>
         </div>
@@ -1236,6 +1650,11 @@
             updateAllocationChart(allocSelect.value, ACTIVE_RANGE.start, ACTIVE_RANGE.end);
         }
         updateRiskCharts(SIMULATION_RESULTS.summary);
+        
+        // Update Strategy Guide tab cards with live return metrics
+        if (document.getElementById('definitionGrid')) {
+            renderDefinitionsTab();
+        }
     }
 
     // =========================================================================
@@ -1461,25 +1880,25 @@
         cards.innerHTML = `
             <div class="best-card return">
                 <div class="award">🚀 Highest Return</div>
-                <div class="strat-name">${bestReturn.Strategy}</div>
+                <div class="strat-name"><span class="strategy-name-link" onclick="openStrategyModal('${bestReturn.Strategy.replace(/'/g, "\\'")}')">${bestReturn.Strategy}</span></div>
                 <div class="strat-value" style="color: var(--cyan)">${bestReturn.total_return_pct.toFixed(2)}%</div>
                 <div class="strat-label">$${Number(bestReturn.total_value.toFixed(0)).toLocaleString()} final value</div>
             </div>
             <div class="best-card sharpe">
                 <div class="award">📊 Best Risk-Adjusted</div>
-                <div class="strat-name">${bestSharpe.Strategy}</div>
+                <div class="strat-name"><span class="strategy-name-link" onclick="openStrategyModal('${bestSharpe.Strategy.replace(/'/g, "\\'")}')">${bestSharpe.Strategy}</span></div>
                 <div class="strat-value" style="color: var(--accent-1)">${bestSharpe.sharpe_ratio.toFixed(3)}</div>
                 <div class="strat-label">Sharpe Ratio</div>
             </div>
             <div class="best-card drawdown">
                 <div class="award">🛡️ Lowest Drawdown</div>
-                <div class="strat-name">${bestDrawdown.Strategy}</div>
+                <div class="strat-name"><span class="strategy-name-link" onclick="openStrategyModal('${bestDrawdown.Strategy.replace(/'/g, "\\'")}')">${bestDrawdown.Strategy}</span></div>
                 <div class="strat-value" style="color: var(--accent-3)">${bestDrawdown.max_drawdown_pct.toFixed(2)}%</div>
                 <div class="strat-label">Max Drawdown</div>
             </div>
             <div class="best-card calmar">
                 <div class="award">⚖️ Best Calmar</div>
-                <div class="strat-name">${bestCalmar.Strategy}</div>
+                <div class="strat-name"><span class="strategy-name-link" onclick="openStrategyModal('${bestCalmar.Strategy.replace(/'/g, "\\'")}')">${bestCalmar.Strategy}</span></div>
                 <div class="strat-value" style="color: var(--green)">${bestCalmar.calmar_ratio.toFixed(3)}</div>
                 <div class="strat-label">CAGR / Max Drawdown</div>
             </div>
@@ -1570,7 +1989,7 @@
 
                 switch (c.format) {
                     case 'text':
-                        display = `<span class="strategy-dot" style="background:${color}"></span>${val}`;
+                        display = `<span class="strategy-dot" style="background:${color}"></span><span class="strategy-name-link" onclick="openStrategyModal('${val.replace(/'/g, "\\'")}')">${val}</span>`;
                         break;
                     case 'dollar':
                         display = `$${Number(Math.round(val)).toLocaleString()}`;
@@ -2151,6 +2570,9 @@
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 tab.classList.add('active');
                 document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+                if (tab.dataset.tab === 'definitions') {
+                    renderDefinitionsTab();
+                }
             });
         });
     }
@@ -2603,10 +3025,547 @@
     }
 
     // =========================================================================
+    // DYNAMIC TICKER HELPER
+    // =========================================================================
+    function getTickerLabel(key) {
+        if (UNIVERSE_META && UNIVERSE_META.tickers) {
+            if (key === 'QQQ') return UNIVERSE_META.tickers['1x'] || 'QQQ';
+            if (key === 'QLD') return UNIVERSE_META.tickers['2x'] || 'QLD';
+            if (key === 'TQQQ') return UNIVERSE_META.tickers['3x'] || 'TQQQ';
+            if (key === '1x') return UNIVERSE_META.tickers['1x'] || 'QQQ';
+            if (key === '2x') return UNIVERSE_META.tickers['2x'] || 'QLD';
+            if (key === '3x') return UNIVERSE_META.tickers['3x'] || 'TQQQ';
+        }
+        return key;
+    }
+
+    function replaceTickersInText(text) {
+        if (!text) return "";
+        let result = text;
+        result = result.replace(/\bQQQ\b/g, getTickerLabel('QQQ'));
+        result = result.replace(/\bQLD\b/g, getTickerLabel('QLD'));
+        result = result.replace(/\bTQQQ\b/g, getTickerLabel('TQQQ'));
+        return result;
+    }
+
+    // =========================================================================
+    // STRATEGY DEFINITION Front-End Database
+    // =========================================================================
+    const STRATEGY_DETAILS = {
+        "SMA Trend Regime": {
+            tagline: "Moving Average Trend Follower",
+            style: "Trend Following",
+            complexity: "Simple",
+            indicators: ["SMA 50 (Daily)", "SMA 200 (Daily)"],
+            philosophy: "Leverages standard moving average crossover regimes to stay aggressively exposed to TQQQ trends while hedging against severe bear markets by shifting down to 1x exposure when the trend breaks.",
+            mechanism: "Allocates 100% to TQQQ when the price of QQQ is above both the 50-day and 200-day Simple Moving Averages. Scales back to 100% QLD (2x) when above only the 200-day SMA, and retreats fully to QQQ (1x) during clear downtrends (below 200 SMA).",
+            rules: [
+                { cond: "Price > 50 SMA & Price > 200 SMA (Strong Uptrend)", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
+                { cond: "Price <= 50 SMA & Price > 200 SMA (Mild Uptrend)", alloc: { "TQQQ": 0, "QLD": 100, "QQQ": 0, "CASH": 0 } },
+                { cond: "Price <= 200 SMA (Downtrend)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 100, "CASH": 0 } }
+            ],
+            pros: ["Outstanding returns during sustained, smooth upward trends.", "Protects portfolio capital from catastrophic, long-term bear markets (e.g. 2008)."],
+            cons: ["Can suffer significant whipsaw losses in sideways, range-bound markets.", "Subject to entry delay at major market bottoms."]
+        },
+        "RSI Momentum": {
+            tagline: "Oscillator-Driven Swing Trader",
+            style: "Contrarian Momentum",
+            complexity: "Intermediate",
+            indicators: ["RSI (14-day) on unleveraged QQQ"],
+            philosophy: "Monitors the Relative Strength Index (RSI) to capture extreme overbought and oversold conditions. It scales back risk when the index is overextended and buys aggressively during panic capitulation.",
+            mechanism: "Graduated risk shifting based on four RSI boundaries. If RSI is extremely overbought (> 70), it locks in gains. If RSI is oversold (< 30), it takes on max leverage to capture the reversion. Normal bullish ranges allocate moderate leverage.",
+            rules: [
+                { cond: "RSI > 70 (Overbought / Overextended)", alloc: { "TQQQ": 0, "QLD": 30, "QQQ": 70, "CASH": 0 } },
+                { cond: "50 < RSI <= 70 (Healthy Bullish Momentum)", alloc: { "TQQQ": 40, "QLD": 30, "QQQ": 30, "CASH": 0 } },
+                { cond: "30 <= RSI <= 50 (Neutral to Weak Momentum)", alloc: { "TQQQ": 0, "QLD": 40, "QQQ": 60, "CASH": 0 } },
+                { cond: "RSI < 30 (Oversold Panic / Deep Pullback)", alloc: { "TQQQ": 50, "QLD": 30, "QQQ": 20, "CASH": 0 } }
+            ],
+            pros: ["Highly effective at scaling out near local peaks and scaling in near local troughs.", "Avoids the volatility decay associated with holding high leverage during market peaks."],
+            cons: ["Can scale out of leverage way too early in massive, parabolic bull runs.", "May buy early in severe, prolonged market corrections before a bottom is set."]
+        },
+        "VIX Volatility Regime": {
+            tagline: "Beta Slippage & Decay Minimizer",
+            style: "Dynamic Hedging",
+            complexity: "Intermediate",
+            indicators: ["VIX Index (CBOE Volatility Index)"],
+            philosophy: "Inversely sizes leverage exposure based on market volatility. Volatility decay (beta slippage) is highly toxic to leveraged ETFs; this strategy seeks to completely avoid high leverage when VIX signals unstable price swings.",
+            mechanism: "Maintains a heavy 3x allocation during low-fear, stable environments (VIX < 15). Gradually shifts down to 2x and 1x as fear rises, and completely removes leverage when VIX crosses 35 (extreme systemic panic).",
+            rules: [
+                { cond: "VIX < 15 (Calm & Stable Market)", alloc: { "TQQQ": 50, "QLD": 30, "QQQ": 20, "CASH": 0 } },
+                { cond: "15 <= VIX < 25 (Normal Volatility / Minor Swings)", alloc: { "TQQQ": 30, "QLD": 40, "QQQ": 30, "CASH": 0 } },
+                { cond: "25 <= VIX < 35 (Elevated Fear & Volatility)", alloc: { "TQQQ": 10, "QLD": 30, "QQQ": 60, "CASH": 0 } },
+                { cond: "VIX >= 35 (Market Crisis / High Decay)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 100, "CASH": 0 } }
+            ],
+            pros: ["Very effective at minimizing volatility decay in chop.", "Shields the portfolio during major flash crashes and fast selloffs."],
+            cons: ["Can de-leverage too late in extremely sudden crashes.", "Might delay re-leveraging if VIX remains sticky after price recovery has already started."]
+        },
+        "Bollinger Mean Reversion": {
+            tagline: "Statistical Band Trader",
+            style: "Mean Reversion",
+            complexity: "Intermediate",
+            indicators: ["Bollinger Bands (20-day SMA, 2 Std Dev) on QQQ"],
+            philosophy: "A statistical reversion model that acts on price overextensions. It assumes that when price strays too far from the moving average (bands), it will revert. Thus, it adds leverage when oversold and removes it when overbought.",
+            mechanism: "Uses the position of the QQQ close price relative to its Bollinger Bands. Price above the upper band triggers profit-taking. Price below the lower band triggers aggressive dip-buying using 3x leverage.",
+            rules: [
+                { cond: "Price > BB Upper Band (Statistically Overextended)", alloc: { "TQQQ": 0, "QLD": 30, "QQQ": 70, "CASH": 0 } },
+                { cond: "BB Middle < Price <= BB Upper (Healthy Expansion)", alloc: { "TQQQ": 50, "QLD": 30, "QQQ": 20, "CASH": 0 } },
+                { cond: "BB Lower < Price <= BB Middle (Fading Strength)", alloc: { "TQQQ": 0, "QLD": 50, "QQQ": 50, "CASH": 0 } },
+                { cond: "Price <= BB Lower Band (Statistically Oversold / Value)", alloc: { "TQQQ": 60, "QLD": 30, "QQQ": 10, "CASH": 0 } }
+            ],
+            pros: ["Captures swing lows and re-entries beautifully in choppy or upward-trending channels.", "Maintains an automated discipline of taking profits during parabolic spikes."],
+            cons: ["Struggles severely in persistent 'band-riding' regimes, where the price hugs the lower band during a crash, or the upper band during a massive rally."]
+        },
+        "MACD Trend Strength": {
+            tagline: "Momentum Phase Allocator",
+            style: "Trend Following",
+            complexity: "Intermediate",
+            indicators: ["MACD Line", "Signal Line (12, 26, 9 EMA) on QQQ"],
+            philosophy: "Uses moving average convergence divergence to scale leverage in accordance with momentum. It seeks to capture the high-velocity middle phase of trends and shield the portfolio as momentum breaks down.",
+            mechanism: "Divides market phases into four distinct quadrants based on the sign of MACD and its position relative to the Signal line. Highest leverage (70% TQQQ) is held when momentum is positive and expanding.",
+            rules: [
+                { cond: "MACD > Signal & MACD > 0 (Strong Bullish Phase)", alloc: { "TQQQ": 70, "QLD": 20, "QQQ": 10, "CASH": 0 } },
+                { cond: "MACD > Signal & MACD <= 0 (Emerging Bullish Momentum)", alloc: { "TQQQ": 30, "QLD": 50, "QQQ": 20, "CASH": 0 } },
+                { cond: "MACD <= Signal & MACD > 0 (Fading Bullish Phase)", alloc: { "TQQQ": 20, "QLD": 40, "QQQ": 40, "CASH": 0 } },
+                { cond: "MACD <= Signal & MACD <= 0 (Confirmed Bearish Phase)", alloc: { "TQQQ": 0, "QLD": 20, "QQQ": 80, "CASH": 0 } }
+            ],
+            pros: ["Excellent at staying fully leveraged during the most profitable, high-momentum parts of a trend.", "Dynamically scales down exposure *before* a full crossover occurs in some instances."],
+            cons: ["Like all MACD models, it suffers from lag, resulting in delayed exits during sharp, V-shaped reversals.", "High rate of rebalancing activity in noisy markets."]
+        },
+        "Drawdown Dynamic": {
+            tagline: "Capital-Preserving Circuit Breaker",
+            style: "Defensive Hedging",
+            complexity: "Intermediate",
+            indicators: ["Active Portfolio Drawdown from Peak"],
+            philosophy: "An automated self-protective system. Instead of looking at external market indicators, it monitors its own internal health. As losses from its historical peak build, it aggressively cuts leverage to preserve remaining capital.",
+            mechanism: "Tracks portfolio value against its all-time peak. Under a 5% drawdown, it runs a high-leverage growth posture (70% TQQQ). As drawdown deepens past 10% and 20%, it moves nearly entirely into 1x QQQ to defend against wipeout.",
+            rules: [
+                { cond: "Drawdown < 5% (Portfolio Near Highs - Growth Mode)", alloc: { "TQQQ": 70, "QLD": 20, "QQQ": 10, "CASH": 0 } },
+                { cond: "5% <= Drawdown < 10% (Minor Drawdown - Caution Mode)", alloc: { "TQQQ": 30, "QLD": 40, "QQQ": 30, "CASH": 0 } },
+                { cond: "10% <= Drawdown < 20% (Significant Correction - Defensive)", alloc: { "TQQQ": 10, "QLD": 30, "QQQ": 60, "CASH": 0 } },
+                { cond: "Drawdown >= 20% (Bear Market - Preservation Mode)", alloc: { "TQQQ": 0, "QLD": 10, "QQQ": 90, "CASH": 0 } }
+            ],
+            pros: ["Provides an absolute guarantee that a catastrophic crash (e.g. -80%) will not wipe out the portfolio.", "Preserves the 'seed capital' needed to rebuild when markets recover."],
+            cons: ["Can freeze and lock in losses near the very bottom of a crash.", "Suffers from slow recovery because leverage is minimal when the market rebounds from a deep low."]
+        },
+        "Composite Multi-Signal": {
+            tagline: "Consensus-Driven Algorithmic Engine",
+            style: "Multi-Indicator Blended",
+            complexity: "Advanced",
+            indicators: ["SMA Crossover", "RSI Momentum", "VIX Volatility Index"],
+            philosophy: "Avoids relying on a single market dimension. By combining trend (SMA), momentum (RSI), and fear/volatility (VIX) into a single blended score (0 to 100), it requires consensus across multiple models before taking high-leverage bets.",
+            mechanism: "Computes a composite score based on indicator consensus. A score >= 75 denotes a strong confirmed bull market, initiating maximum leverage. Scores below 25 trigger a highly defensive stance.",
+            rules: [
+                { cond: "Composite Score 75 - 100 (High-Confidence Bull Market)", alloc: { "TQQQ": 70, "QLD": 20, "QQQ": 10, "CASH": 0 } },
+                { cond: "Composite Score 50 - 75 (Moderate Uptrend / Stable)", alloc: { "TQQQ": 40, "QLD": 35, "QQQ": 25, "CASH": 0 } },
+                { cond: "Composite Score 25 - 50 (Market Uncertainty / Mixed Sign)", alloc: { "TQQQ": 15, "QLD": 35, "QQQ": 50, "CASH": 0 } },
+                { cond: "Composite Score 0 - 25 (Systemic Downtrend / High Risk)", alloc: { "TQQQ": 0, "QLD": 20, "QQQ": 80, "CASH": 0 } }
+            ],
+            pros: ["Highly stable; eliminates many false breakout whipsaws by requiring secondary indicator confirmations.", "Smooth rebalancing flows."],
+            cons: ["Can be slow to react during sudden, news-driven market regime shifts.", "Underperforms single-indicator models when one massive, pure trend dominates the entire period."]
+        },
+        "Tactical Cash & Buy-the-Dip": {
+            tagline: "Dry Powder Dip-Buyer",
+            style: "Value Opportunist",
+            complexity: "Advanced",
+            indicators: ["RSI (14-day)", "SMA 200", "Portfolio Drawdown"],
+            philosophy: "Saves cash during overextensions, then deploys 100% of cash into TQQQ/QLD when deep downturns occur. A highly disciplined value-seeking strategy that stockpiles cash (up to 50%) during overbought peaks or early bear markets, then unleashes it during capitulation panic.",
+            mechanism: "Monitors overbought conditions (RSI > 70) and bear entry (below 200 SMA) to build cash reserves. When deep oversold panic occurs (RSI < 35 or Drawdown >= 15%), it goes all-in, deploying 100% of cash directly into TQQQ and QLD.",
+            rules: [
+                { cond: "RSI < 35 or Drawdown >= 15% (Capitulation / Deep Panic)", alloc: { "TQQQ": 80, "QLD": 20, "QQQ": 0, "CASH": 0 } },
+                { cond: "RSI > 70 (Overextended Peaks - Accumulate Cash)", alloc: { "TQQQ": 0, "QLD": 20, "QQQ": 40, "CASH": 40 } },
+                { cond: "Price < 200 SMA & Drawdown < 15% (Early Bear - Save Cash)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 50, "CASH": 50 } },
+                { cond: "Default Bullish Uptrend (Healthy Active Posture)", alloc: { "TQQQ": 40, "QLD": 30, "QQQ": 20, "CASH": 10 } }
+            ],
+            pros: ["Exceptional capacity to generate spectacular gains by buying extreme bottoms with massive leveraged weight.", "Holds large cash safety buffers during volatile distribution tops."],
+            cons: ["Stockpiled cash generates a performance drag during highly persistent, uninterrupted bull markets.", "Requires extreme discipline as it buys when market panic is at its worst."]
+        },
+        "Enhanced Quant SMA": {
+            tagline: "Asymmetric Buffer & Confirmation Quant Model",
+            style: "Quantitative Trend-Following",
+            complexity: "Advanced",
+            indicators: ["SMA 50", "SMA 200", "RSI", "MACD Histogram", "VIX Index", "Yield-bearing sweep"],
+            philosophy: "An institutional-grade quant strategy. It uses asymmetric buffer bands (hysteresis loops) around the 50 and 200 SMAs to completely ignore noise and whipsaw. It requires multiple filters (RSI, VIX, MACD) to confirm trends, and sweeps assets to interest-bearing cash (SGOV, 4.5% yield) when bear markets trigger.",
+            mechanism: "Determines bull/bear using a +3%/-1.5% buffer band around SMA 200, and scales strong/mild leverage using a +2%/-1% buffer around SMA 50. Allocates to TQQQ only when RSI, VIX, and MACD confirm. Sweeps defensive assets into 100% CASH.",
+            rules: [
+                { cond: "Bull Strong Crossover + Momentum Confirmation", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
+                { cond: "Bull Strong Crossover (Momentum / Vol Disconfirmed)", alloc: { "TQQQ": 0, "QLD": 50, "QQQ": 50, "CASH": 0 } },
+                { cond: "Bull Mild Crossover & Volatility is Safe (< 25 VIX)", alloc: { "TQQQ": 0, "QLD": 100, "QQQ": 0, "CASH": 0 } },
+                { cond: "Bear Trend Crossover (Hysteresis Active)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
+            ],
+            pros: ["Almost entirely eliminates whipsaw losses near moving averages.", "Earns steady interest yield in bear markets while maintaining zero market exposure.", "Elite drawdowns and risk-adjusted performance."],
+            cons: ["Extremely complex; entry can be slightly delayed during highly explosive, V-shaped market reversals."]
+        }
+    };
+
+    const BENCHMARK_DETAILS = {
+        "Buy & Hold QQQ (1x)": {
+            tagline: "Unleveraged Baseline",
+            style: "Passive Index",
+            complexity: "Simple",
+            indicators: ["None"],
+            philosophy: "A straightforward, passive buy-and-hold approach investing 100% of capital into QQQ (1x leverage). Represents the baseline performance of the underlying market.",
+            mechanism: "Maintains a constant 100% allocation to unleveraged QQQ at all times.",
+            rules: [
+                { cond: "Always", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 100, "CASH": 0 } }
+            ],
+            pros: ["Zero management or rebalancing effort.", "Zero volatility decay or leverage risk.", "Steady, highly reliable long-term performance."],
+            cons: ["Does not participate in the accelerated gains of leverage during strong bull markets.", "Exposed to full index drawdowns."]
+        },
+        "Buy & Hold QLD (2x)": {
+            tagline: "Constant 2x Leveraged Benchmark",
+            style: "Passive Leverage",
+            complexity: "Simple",
+            indicators: ["None"],
+            philosophy: "A passive buy-and-hold strategy holding QLD (2x leveraged ETF) at all times. Designed to capture double the daily return of the NASDAQ-100.",
+            mechanism: "Maintains a constant 100% allocation to 2x leveraged QLD at all times.",
+            rules: [
+                { cond: "Always", alloc: { "TQQQ": 0, "QLD": 100, "QQQ": 0, "CASH": 0 } }
+            ],
+            pros: ["Captures high multi-year returns during powerful bull runs.", "Intermediate leverage limits the worst effects of decay compared to 3x."],
+            cons: ["Exposed to heavy volatility decay in sideways markets.", "Can suffer massive, devastating drawdowns during major bear markets (e.g. -70% or more)."]
+        },
+        "Buy & Hold TQQQ (3x)": {
+            tagline: "Constant 3x Leveraged Benchmark",
+            style: "Passive Leverage",
+            complexity: "Simple",
+            indicators: ["None"],
+            philosophy: "A passive buy-and-hold strategy holding TQQQ (3x leveraged ETF) at all times. Aiming for triple the daily return of the NASDAQ-100.",
+            mechanism: "Maintains a constant 100% allocation to 3x leveraged TQQQ at all times.",
+            rules: [
+                { cond: "Always", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } }
+            ],
+            pros: ["Can deliver astronomically high returns during long, uninterrupted, low-volatility bull runs."],
+            cons: ["Extremely high risk of total capital destruction (wipeout).", "Suffers devastating volatility decay in choppy markets.", "Drawdowns can easily exceed 90% during severe recessions."]
+        },
+        "Equal Weight (33/33/33)": {
+            tagline: "Static Leverage Ladder",
+            style: "Passive Multi-Asset",
+            complexity: "Simple",
+            indicators: ["None"],
+            philosophy: "Maintains a static, equal dollar allocation across all three leverage levels (QQQ, QLD, TQQQ) to blend passive index exposure with moderated leverage.",
+            mechanism: "Maintains a static allocation of 33.3% QQQ, 33.3% QLD, and 33.3% TQQQ at all times.",
+            rules: [
+                { cond: "Always", alloc: { "TQQQ": 33.3, "QLD": 33.3, "QQQ": 33.3, "CASH": 0 } }
+            ],
+            pros: ["Blends the stability of 1x with the explosive upside of 3x.", "Lower volatility and decay than pure TQQQ."],
+            cons: ["Still suffers from significant volatility decay due to constant TQQQ/QLD exposure.", "Exposed to heavy losses in deep market crashes with no defensive de-leveraging mechanism."]
+        }
+    };
+
+    // Helper to get specific ticker label dynamically
+    function getBenchmarkKey(strategyName) {
+        if (strategyName.includes("Buy & Hold") && strategyName.includes("(1x)")) return "Buy & Hold QQQ (1x)";
+        if (strategyName.includes("Buy & Hold") && strategyName.includes("(2x)")) return "Buy & Hold QLD (2x)";
+        if (strategyName.includes("Buy & Hold") && strategyName.includes("(3x)")) return "Buy & Hold TQQQ (3x)";
+        if (strategyName.includes("Equal Weight")) return "Equal Weight (33/33/33)";
+        return strategyName;
+    }
+
+    // =========================================================================
+    // MODAL OPEN / CLOSE CONTROLS
+    // =========================================================================
+    function openStrategyModal(rawName) {
+        // Resolve benchmarks that might have had dynamic ticker names in the summary list
+        const key = getBenchmarkKey(rawName);
+        const details = STRATEGY_DETAILS[key] || BENCHMARK_DETAILS[key];
+
+        if (!details) {
+            console.error("No strategy details found for: " + rawName + " (Key: " + key + ")");
+            return;
+        }
+
+        // 1. Populate details (using dynamic ticker replacements)
+        document.getElementById('modalTitle').textContent = replaceTickersInText(rawName);
+        document.getElementById('modalSubtitle').textContent = replaceTickersInText(details.tagline);
+        document.getElementById('modalPhilosophy').textContent = replaceTickersInText(details.philosophy);
+        document.getElementById('modalMechanism').textContent = replaceTickersInText(details.mechanism);
+
+        // 2. Rules & Allocations
+        const rulesContainer = document.getElementById('modalRulesContainer');
+        rulesContainer.innerHTML = '';
+
+        details.rules.forEach(rule => {
+            const row = document.createElement('div');
+            row.className = 'rule-allocation-row';
+
+            // Replace QQQ/QLD/TQQQ in condition
+            const condText = replaceTickersInText(rule.cond);
+
+            // Compute segments width
+            let segmentsHtml = '';
+            let labelsHtml = '';
+
+            const tWidth = rule.alloc.TQQQ || 0;
+            const qWidth = rule.alloc.QLD || 0;
+            const qqqWidth = rule.alloc.QQQ || 0;
+            const cWidth = rule.alloc.CASH || 0;
+
+            if (tWidth > 0) {
+                segmentsHtml += `<div class="alloc-segment tqqq" style="width: ${tWidth}%"></div>`;
+                labelsHtml += `<span class="allocation-label-item"><span class="allocation-dot tqqq"></span>${getTickerLabel('TQQQ')}: ${tWidth.toFixed(0)}%</span>`;
+            }
+            if (qWidth > 0) {
+                segmentsHtml += `<div class="alloc-segment qld" style="width: ${qWidth}%"></div>`;
+                labelsHtml += `<span class="allocation-label-item"><span class="allocation-dot qld"></span>${getTickerLabel('QLD')}: ${qWidth.toFixed(0)}%</span>`;
+            }
+            if (qqqWidth > 0) {
+                segmentsHtml += `<div class="alloc-segment qqq" style="width: ${qqqWidth}%"></div>`;
+                labelsHtml += `<span class="allocation-label-item"><span class="allocation-dot qqq"></span>${getTickerLabel('QQQ')}: ${qqqWidth.toFixed(0)}%</span>`;
+            }
+            if (cWidth > 0) {
+                segmentsHtml += `<div class="alloc-segment cash" style="width: ${cWidth}%"></div>`;
+                labelsHtml += `<span class="allocation-label-item"><span class="allocation-dot cash"></span>CASH: ${cWidth.toFixed(0)}%</span>`;
+            }
+
+            row.innerHTML = `
+                <div class="rule-condition">${condText}</div>
+                <div class="allocation-bar-container">
+                    ${segmentsHtml}
+                </div>
+                <div class="allocation-labels">
+                    ${labelsHtml}
+                </div>
+            `;
+            rulesContainer.appendChild(row);
+        });
+
+        // 3. Pros and Cons
+        const pcContainer = document.getElementById('modalProsConsContainer');
+        pcContainer.innerHTML = '';
+
+        if (details.pros) {
+            details.pros.forEach(pro => {
+                const pDiv = document.createElement('div');
+                pDiv.className = 'pro-con-item pro';
+                pDiv.innerHTML = `<span class="icon">✓</span><span>${replaceTickersInText(pro)}</span>`;
+                pcContainer.appendChild(pDiv);
+            });
+        }
+        if (details.cons) {
+            details.cons.forEach(con => {
+                const cDiv = document.createElement('div');
+                cDiv.className = 'pro-con-item con';
+                cDiv.innerHTML = `<span class="icon">✗</span><span>${replaceTickersInText(con)}</span>`;
+                pcContainer.appendChild(cDiv);
+            });
+        }
+
+        // 4. Live Backtest Performance statistics
+        const perf = SIMULATION_RESULTS.summary.find(s => getBenchmarkKey(s.Strategy) === key);
+
+        if (perf) {
+            document.getElementById('modalPerfReturn').textContent = (perf.total_return_pct >= 0 ? '+' : '') + perf.total_return_pct.toFixed(2) + '%';
+            document.getElementById('modalPerfCAGR').textContent = (perf.cagr_pct >= 0 ? '+' : '') + perf.cagr_pct.toFixed(2) + '%';
+            document.getElementById('modalPerfDrawdown').textContent = '-' + Math.abs(perf.max_drawdown_pct).toFixed(2) + '%';
+            document.getElementById('modalPerfSharpe').textContent = perf.sharpe_ratio.toFixed(3);
+            document.getElementById('modalPerfSortino').textContent = perf.sortino_ratio.toFixed(3);
+            document.getElementById('modalPerfCalmar').textContent = perf.calmar_ratio.toFixed(3);
+            document.getElementById('modalPerfRebalances').textContent = perf.rebalance_count.toLocaleString();
+        } else {
+            // Placeholder
+            document.getElementById('modalPerfReturn').textContent = 'N/A';
+            document.getElementById('modalPerfCAGR').textContent = 'N/A';
+            document.getElementById('modalPerfDrawdown').textContent = 'N/A';
+            document.getElementById('modalPerfSharpe').textContent = 'N/A';
+            document.getElementById('modalPerfSortino').textContent = 'N/A';
+            document.getElementById('modalPerfCalmar').textContent = 'N/A';
+            document.getElementById('modalPerfRebalances').textContent = 'N/A';
+        }
+
+        // Active range parameters
+        document.getElementById('modalActivePeriod').textContent = (ACTIVE_RANGE.start || "—") + " to " + (ACTIVE_RANGE.end || "—");
+        const weeklyDCA = parseFloat(document.getElementById('weekly-dca').value) || 0.0;
+        document.getElementById('modalActiveDCA').textContent = "$" + weeklyDCA.toLocaleString() + "/wk";
+
+        // Show Modal with classes
+        const overlay = document.getElementById('strategyModalOverlay');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Listen for keyboard ESC key to close
+        document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    function closeStrategyModal() {
+        const overlay = document.getElementById('strategyModalOverlay');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', handleEscapeKey);
+    }
+
+    function closeStrategyModalOnOverlayClick(event) {
+        if (event.target === document.getElementById('strategyModalOverlay')) {
+            closeStrategyModal();
+        }
+    }
+
+    function handleEscapeKey(event) {
+        if (event.key === 'Escape') {
+            closeStrategyModal();
+        }
+    }
+
+    // =========================================================================
+    // DEFINITIONS TAB CARD GRID BUILDER
+    // =========================================================================
+    function renderDefinitionsTab() {
+        const grid = document.getElementById('definitionGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const allNames = DATA.summary.map(s => s.Strategy);
+
+        // Combine strategy names with their details, order to match performance rank in summary!
+        const orderedStrategies = [];
+        DATA.summary.forEach(summaryItem => {
+            const key = getBenchmarkKey(summaryItem.Strategy);
+            const isBenchmark = BENCHMARK_NAMES.includes(summaryItem.Strategy);
+            const details = STRATEGY_DETAILS[key] || BENCHMARK_DETAILS[key];
+            if (details) {
+                orderedStrategies.push({
+                    displayName: summaryItem.Strategy,
+                    key: key,
+                    details: details,
+                    perf: summaryItem,
+                    isBenchmark: isBenchmark
+                });
+            }
+        });
+
+        orderedStrategies.forEach((item) => {
+            const name = item.displayName;
+            const details = item.details;
+            const perf = item.perf;
+            const isBenchmark = item.isBenchmark;
+
+            const colorIdx = allNames.indexOf(name);
+            const color = STRATEGY_COLORS[colorIdx % STRATEGY_COLORS.length];
+
+            const card = document.createElement('div');
+            card.className = 'def-card';
+            if (isBenchmark) {
+                card.style.opacity = '0.9';
+                card.style.borderStyle = 'dashed';
+            }
+
+            // Create badges
+            let badgesHtml = `
+                <span class="def-badge style">${details.style}</span>
+                <span class="def-badge complexity">${details.complexity}</span>
+            `;
+            details.indicators.forEach(ind => {
+                badgesHtml += `<span class="def-badge indicator">${replaceTickersInText(ind)}</span>`;
+            });
+
+            // Create short version of philosophy
+            const shortPhilosophy = replaceTickersInText(details.philosophy);
+
+            // Performance stats pill
+            const perfStatsHtml = `
+                <div style="font-size: 0.76rem; color: var(--text-muted); background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-weight: 500;">
+                    Return: <strong style="color: ${perf.total_return_pct >= 0 ? 'var(--green)' : 'var(--red)'}; font-size: 0.8rem;">${perf.total_return_pct >= 0 ? '+' : ''}${perf.total_return_pct.toFixed(1)}%</strong>
+                    &nbsp;|&nbsp;
+                    Sharpe: <strong style="color: var(--cyan); font-size: 0.8rem;">${perf.sharpe_ratio.toFixed(2)}</strong>
+                </div>
+            `;
+
+            card.innerHTML = `
+                <div class="def-card-header">
+                    <div class="def-card-title">
+                        <span class="strategy-dot" style="background:${color}"></span>
+                        <span>${replaceTickersInText(name)}</span>
+                    </div>
+                    <div class="def-card-tagline">${replaceTickersInText(details.tagline)}</div>
+                    <div class="def-card-badges">
+                        ${badgesHtml}
+                    </div>
+                    <div class="def-card-desc">${shortPhilosophy}</div>
+                </div>
+                <div class="def-card-footer">
+                    ${perfStatsHtml}
+                    <button class="def-card-btn" onclick="openStrategyModal('${name.replace(/'/g, "\\'")}')">Explore Rules →</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    // =========================================================================
     // INIT
     // =========================================================================
 
     document.addEventListener('DOMContentLoaded', loadData);
     </script>
+    <!-- Strategy Detail Modal Overlay -->
+    <div class="strat-modal-overlay" id="strategyModalOverlay" onclick="closeStrategyModalOnOverlayClick(event)">
+        <div class="strat-modal" id="strategyModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="strat-modal-header">
+                <div class="strat-modal-title-area">
+                    <div class="strat-modal-title" id="modalTitle">Strategy Name</div>
+                    <div class="strat-modal-subtitle" id="modalSubtitle">Tagline</div>
+                </div>
+                <button class="strat-modal-close" onclick="closeStrategyModal()" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="strat-modal-body">
+                <!-- Left Column: Core Info & Mechanics -->
+                <div>
+                    <div class="strat-modal-section-title">Philosophy & Philosophy</div>
+                    <p class="strat-modal-para" id="modalPhilosophy"></p>
+
+                    <div class="strat-modal-section-title">Core Mechanism</div>
+                    <p class="strat-modal-para" id="modalMechanism"></p>
+
+                    <div class="strat-modal-section-title">Conditional Allocations</div>
+                    <div id="modalRulesContainer">
+                        <!-- Dynamic conditional rules and allocation segments -->
+                    </div>
+                </div>
+
+                <!-- Right Column: Live Performance & Profiles -->
+                <div>
+                    <div class="strat-modal-section-title">⚡ Live Backtest Performance</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: -6px; margin-bottom: 16px; line-height: 1.3;">
+                        Numbers below correspond to the active filter: <strong style="color: var(--accent-1);"><span id="modalActivePeriod">—</span></strong> with DCA of <strong style="color: var(--green);"><span id="modalActiveDCA">—</span></strong>.
+                    </div>
+                    <div class="modal-perf-grid">
+                        <div class="modal-perf-card highlight">
+                            <div class="label">Total Return</div>
+                            <div class="value" id="modalPerfReturn">—</div>
+                        </div>
+                        <div class="modal-perf-card highlight">
+                            <div class="label">CAGR</div>
+                            <div class="value" id="modalPerfCAGR">—</div>
+                        </div>
+                        <div class="modal-perf-card">
+                            <div class="label">Max Drawdown</div>
+                            <div class="value" style="color: var(--red)" id="modalPerfDrawdown">—</div>
+                        </div>
+                        <div class="modal-perf-card">
+                            <div class="label">Sharpe Ratio</div>
+                            <div class="value" id="modalPerfSharpe">—</div>
+                        </div>
+                        <div class="modal-perf-card">
+                            <div class="label">Sortino Ratio</div>
+                            <div class="value" id="modalPerfSortino">—</div>
+                        </div>
+                        <div class="modal-perf-card">
+                            <div class="label">Calmar Ratio</div>
+                            <div class="value" id="modalPerfCalmar">—</div>
+                        </div>
+                        <div class="modal-perf-card" style="grid-column: span 2;">
+                            <div class="label">Total Rebalances</div>
+                            <div class="value" style="font-size: 1.1rem" id="modalPerfRebalances">—</div>
+                        </div>
+                    </div>
+
+                    <div class="strat-modal-section-title">Pros & Cons</div>
+                    <div class="pros-cons-grid" id="modalProsConsContainer">
+                        <!-- Dynamic pros & cons list -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
