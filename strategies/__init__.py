@@ -8,6 +8,12 @@ from strategies.drawdown_dynamic import DrawdownDynamicStrategy
 from strategies.composite_signal import CompositeSignalStrategy
 from strategies.tactical_cash import TacticalCashStrategy
 from strategies.enhanced_sma import EnhancedSMATrendStrategy
+from strategies.composer_sma import (
+    ComposerSMATQQQCashStrategy,
+    ComposerSMAQLDCashStrategy,
+    ComposerSMAQQQCashStrategy,
+    ComposerSMATechAITiltStrategy,
+)
 from strategies.benchmarks import (
     BuyHoldQQQ,
     BuyHoldQLD,
@@ -25,6 +31,10 @@ ALL_STRATEGIES = [
     CompositeSignalStrategy,
     TacticalCashStrategy,
     EnhancedSMATrendStrategy,
+    ComposerSMATQQQCashStrategy,
+    ComposerSMAQLDCashStrategy,
+    ComposerSMAQQQCashStrategy,
+    ComposerSMATechAITiltStrategy,
 ]
 
 ALL_BENCHMARKS = [
@@ -33,3 +43,4 @@ ALL_BENCHMARKS = [
     BuyHoldTQQQ,
     EqualWeightStatic,
 ]
+
