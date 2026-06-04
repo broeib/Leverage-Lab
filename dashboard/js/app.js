@@ -1843,6 +1843,62 @@
             ],
             pros: ["Almost entirely eliminates whipsaw losses near moving averages.", "Earns steady interest yield in bear markets while maintaining zero market exposure.", "Elite drawdowns and risk-adjusted performance."],
             cons: ["Extremely complex; entry can be slightly delayed during highly explosive, V-shaped market reversals."]
+        },
+        "Composer SMA: 100% TQQQ / CASH": {
+            tagline: "Stateless 3x Leverage / CASH Switch",
+            style: "Trend Following",
+            complexity: "Simple",
+            indicators: ["SMA 200 (Daily) on QQQ"],
+            philosophy: "A stateless, Composer-native trend strategy that alternates between maximum leverage (TQQQ) in bull markets and high-yield CASH in bear markets based strictly on the 200-day Simple Moving Average.",
+            mechanism: "Allocates 100% to TQQQ when the QQQ close price is above its 200-day SMA. Otherwise, sweeps 100% of the portfolio into yield-bearing CASH to protect capital.",
+            rules: [
+                { cond: "Price > 200 SMA (Uptrend Confirmation)", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
+                { cond: "Price <= 200 SMA (Downtrend Protection)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
+            ],
+            pros: ["Highly compatible with standard Composer conditional logic.", "Captures massive compounding returns during sustained uptrends.", "Full capital protection and yield generation in bear markets."],
+            cons: ["Subject to whipsaw losses near the 200-day SMA line.", "No intermediate buffer or slower de-leveraging tiers."]
+        },
+        "Composer SMA: 100% QLD / CASH": {
+            tagline: "Stateless 2x Leverage / CASH Switch",
+            style: "Trend Following",
+            complexity: "Simple",
+            indicators: ["SMA 200 (Daily) on QQQ"],
+            philosophy: "A stateless, Composer-native trend strategy that alternates between moderate leverage (QLD) in bull markets and high-yield CASH in bear markets based strictly on the 200-day Simple Moving Average.",
+            mechanism: "Allocates 100% to QLD when the QQQ close price is above its 200-day SMA. Otherwise, sweeps 100% of the portfolio into yield-bearing CASH to protect capital.",
+            rules: [
+                { cond: "Price > 200 SMA (Uptrend Confirmation)", alloc: { "TQQQ": 0, "QLD": 100, "QQQ": 0, "CASH": 0 } },
+                { cond: "Price <= 200 SMA (Downtrend Protection)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
+            ],
+            pros: ["Highly compatible with standard Composer conditional logic.", "Moderates volatility decay while offering high leveraged returns.", "Full capital protection and yield generation in bear markets."],
+            cons: ["Subject to whipsaw losses near the 200-day SMA line.", "May underperform 3x strategies in long, powerful bull markets."]
+        },
+        "Composer SMA: 100% QQQ / CASH": {
+            tagline: "Stateless 1x Leverage / CASH Switch",
+            style: "Trend Following",
+            complexity: "Simple",
+            indicators: ["SMA 200 (Daily) on QQQ"],
+            philosophy: "A stateless, Composer-native trend strategy that alternates between unleveraged index exposure (QQQ) in bull markets and high-yield CASH in bear markets based strictly on the 200-day Simple Moving Average.",
+            mechanism: "Allocates 100% to QQQ when the QQQ close price is above its 200-day SMA. Otherwise, sweeps 100% of the portfolio into yield-bearing CASH to protect capital.",
+            rules: [
+                { cond: "Price > 200 SMA (Uptrend Confirmation)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 100, "CASH": 0 } },
+                { cond: "Price <= 200 SMA (Downtrend Protection)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
+            ],
+            pros: ["Highly compatible with standard Composer conditional logic.", "Minimal drawdown and leverage risk.", "Earns steady cash yield when the index is in a downtrend."],
+            cons: ["Underperforms leveraged strategies during strong bull runs.", "Subject to minor trend-following whipsaws."]
+        },
+        "Composer SMA: Tech/AI-Tilted Hybrid": {
+            tagline: "Stateless Leveraged Blend / CASH Switch",
+            style: "Trend Following",
+            complexity: "Intermediate",
+            indicators: ["SMA 200 (Daily) on QQQ"],
+            philosophy: "A stateless, Composer-native trend strategy that switches between a custom Tech/AI-tilted leveraged blend (30% QQQ, 40% QLD, 30% TQQQ, resulting in ~2.0x blended leverage) and high-yield CASH based on the 200-day Simple Moving Average.",
+            mechanism: "Allocates 30% to QQQ, 40% to QLD, and 30% to TQQQ when the QQQ close price is above its 200-day SMA. Otherwise, sweeps 100% of the portfolio into yield-bearing CASH to protect capital.",
+            rules: [
+                { cond: "Price > 200 SMA (Uptrend Confirmation)", alloc: { "TQQQ": 30, "QLD": 40, "QQQ": 30, "CASH": 0 } },
+                { cond: "Price <= 200 SMA (Downtrend Protection)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
+            ],
+            pros: ["Highly compatible with standard Composer conditional logic.", "Targeted 2x blended leverage optimizes returns vs volatility decay.", "Full capital protection and yield generation in bear markets."],
+            cons: ["Subject to whipsaw losses near the 200-day SMA line.", "Static allocation weights during bull market may not suit all risk tolerances."]
         }
     };
 
@@ -1907,6 +1963,17 @@
         if (strategyName.includes("Buy & Hold") && strategyName.includes("(2x)")) return "Buy & Hold QLD (2x)";
         if (strategyName.includes("Buy & Hold") && strategyName.includes("(3x)")) return "Buy & Hold TQQQ (3x)";
         if (strategyName.includes("Equal Weight")) return "Equal Weight (33/33/33)";
+        
+        // Map dynamic Composer SMA strategy names to their canonical QQQ/QLD/TQQQ keys for unified details/performance lookup
+        if (strategyName.includes("Composer SMA: 100% TQQQ") || strategyName.includes("Composer SMA: 100% SOXL")) {
+            return "Composer SMA: 100% TQQQ / CASH";
+        }
+        if (strategyName.includes("Composer SMA: 100% QLD") || strategyName.includes("Composer SMA: 100% USD")) {
+            return "Composer SMA: 100% QLD / CASH";
+        }
+        if (strategyName.includes("Composer SMA: 100% QQQ") || strategyName.includes("Composer SMA: 100% SOXX")) {
+            return "Composer SMA: 100% QQQ / CASH";
+        }
         return strategyName;
     }
 
