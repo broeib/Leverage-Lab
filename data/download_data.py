@@ -319,6 +319,12 @@ def download_etf_data(universe="qqq", force_refresh=False):
 
     combined.to_csv(cache_file)
     print(f"Saved ETF data to {cache_file} ({len(combined)} rows)")
+
+    # Also keep legacy cache file updated when downloading QQQ
+    if universe == "qqq":
+        combined.to_csv(_OLD_CACHE_FILE)
+        print(f"Saved legacy ETF data to {_OLD_CACHE_FILE}")
+
     return combined
 
 
@@ -403,9 +409,18 @@ def load_all_data(universe="qqq", force_refresh=False):
 
 if __name__ == "__main__":
     import sys
-    universe = sys.argv[1] if len(sys.argv) > 1 else "qqq"
-    close_prices, vix_data = load_all_data(universe=universe, force_refresh=True)
-    print("\nSample close prices:")
-    print(close_prices.tail())
-    print("\nSample VIX data:")
-    print(vix_data.tail())
+    target = sys.argv[1].lower() if len(sys.argv) > 1 else "all"
+    if target in ("all", "--all"):
+        for u in UNIVERSES:
+            print(f"\n{'=' * 60}\nFetching data for universe: {u}\n{'=' * 60}")
+            close_prices, vix_data = load_all_data(universe=u, force_refresh=True)
+            print(f"\nSample close prices ({u}):")
+            print(close_prices.tail(3))
+    elif target in UNIVERSES:
+        close_prices, vix_data = load_all_data(universe=target, force_refresh=True)
+        print("\nSample close prices:")
+        print(close_prices.tail())
+        print("\nSample VIX data:")
+        print(vix_data.tail())
+    else:
+        print(f"Unknown universe: '{target}'. Available universes: {list(UNIVERSES.keys())} or 'all'")

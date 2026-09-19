@@ -12,7 +12,9 @@ sys.path.insert(0, BASE_DIR)
 from indicators.rsi import compute_rsi
 from indicators.macd import compute_macd
 
-DATA_FILE = os.path.join(BASE_DIR, "data", "etf_prices.csv")
+DATA_FILE = os.path.join(BASE_DIR, "data", "etf_prices_qqq.csv")
+if not os.path.exists(DATA_FILE):
+    DATA_FILE = os.path.join(BASE_DIR, "data", "etf_prices.csv")
 VIX_FILE = os.path.join(BASE_DIR, "data", "vix_data.csv")
 OUTPUT_HTML = os.path.join(BASE_DIR, "dashboard", "sma_simulator.html")
 

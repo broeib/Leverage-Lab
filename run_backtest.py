@@ -272,14 +272,24 @@ def run_universe(universe_key: str, force_refresh: bool = False) -> Tuple[List[B
 
 def main() -> Dict[str, Tuple[List[BacktestResult], pd.DataFrame]]:
     """Main orchestrator — runs backtests across all universes."""
+    import argparse
+    parser = argparse.ArgumentParser(description="Leveraged ETF Backtesting System")
+    parser.add_argument(
+        "--refresh", "--force-refresh", action="store_true",
+        help="Force re-download of market data even if cache exists"
+    )
+    args, _ = parser.parse_known_args()
+
     logger.info("=" * 70)
     logger.info("LEVERAGED ETF BACKTESTING SYSTEM INITIALIZED")
     logger.info("=" * 70)
     logger.info(f"Universes: {', '.join(config['name'] for config in UNIVERSES.values())}")
+    if args.refresh:
+        logger.info("Force refresh enabled: re-downloading market data from Yahoo Finance...")
 
     all_results = {}
     for universe_key in UNIVERSES:
-        results, summary_df = run_universe(universe_key, force_refresh=False)
+        results, summary_df = run_universe(universe_key, force_refresh=args.refresh)
         all_results[universe_key] = (results, summary_df)
 
     logger.info("=" * 70)
