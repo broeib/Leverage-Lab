@@ -2263,7 +2263,7 @@
         if (btn) {
             btn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
             const text = btn.querySelector('.filter-toggle-text');
-            if (text) text.textContent = isExpanded ? 'Hide Filters' : 'Adjust Filters';
+            if (text) text.textContent = isExpanded ? 'Hide Filters' : 'Filters';
         }
     }
     window.toggleMobileFilter = toggleMobileFilter;

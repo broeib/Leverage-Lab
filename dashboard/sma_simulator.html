@@ -465,13 +465,30 @@
             background: rgba(255, 255, 255, 0.15);
         }
 
-        /* Filter Card Mobile Styles */
+        /* Filter Card Base & Desktop */
+        .filter-card-sma {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem 1.25rem;
+            margin-bottom: 2rem;
+            padding: 1.25rem;
+        }
+
         .filter-card-header-sma {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 1rem;
-            width: 100%;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .filter-card-header-left-sma {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
         .filter-toggle-btn-sma {
@@ -487,6 +504,7 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.15s;
+            flex-shrink: 0;
         }
 
         .filter-toggle-btn-sma:hover {
@@ -507,7 +525,27 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 1.1rem;
+            gap: 1rem;
+        }
+
+        .filter-grid-mobile-sma {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .filter-item-mobile-sma {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .filter-btn-group-sma {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         /* Mobile Responsive Adaptations */
@@ -555,6 +593,20 @@
                 grid-template-columns: 1fr;
                 gap: 1rem;
             }
+            .filter-card-sma {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+                padding: 1rem !important;
+            }
+            .filter-card-header-sma {
+                width: 100%;
+                justify-content: space-between;
+                gap: 0.5rem;
+            }
+            .filter-card-header-left-sma {
+                gap: 0.5rem;
+            }
             .filter-toggle-btn-sma {
                 display: inline-flex;
             }
@@ -580,6 +632,7 @@
             .filter-item-mobile-sma {
                 display: flex;
                 flex-direction: column;
+                align-items: stretch;
                 gap: 4px;
                 width: 100%;
             }
@@ -598,6 +651,7 @@
             .filter-btn-group-sma button {
                 min-height: 40px;
                 justify-content: center;
+                width: 100%;
             }
             /* Frozen sticky date column on triggers table */
             .table-wrapper table th:first-child,
@@ -669,9 +723,9 @@
         </div>
 
         <!-- Interactive Date Range Selector -->
-        <div class="card filter-card-sma" id="filterCardSma" style="margin-bottom: 2rem; padding: 1.25rem;">
+        <div class="card filter-card-sma" id="filterCardSma">
             <div class="filter-card-header-sma">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="filter-card-header-left-sma">
                     <span style="font-size: 1.1rem; font-weight: 700; color: #f1f5f9;">📅 Filter Date Range</span>
                     <span style="font-size: 0.8rem; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px;" id="data-range-label"></span>
                 </div>

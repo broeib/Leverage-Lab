@@ -64,24 +64,24 @@
         </section>
 
         <!-- Interactive Date Range Selector -->
-        <div class="card filter-card" id="filterCard" style="margin-bottom: 24px; padding: 18px 20px;">
+        <div class="card filter-card" id="filterCard">
             <div class="filter-card-header">
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div class="filter-card-header-left">
                     <span style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);">Filter Date Range</span>
                     <span style="font-size: 0.8rem; color: var(--text-muted); background: var(--bg-secondary); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); font-family: var(--font-mono);" id="data-range-label">-- to --</span>
                 </div>
                 
                 <button class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleMobileFilter()" type="button" aria-expanded="false" aria-label="Toggle filter controls">
-                    <span class="filter-toggle-text">Adjust Filters</span>
+                    <span class="filter-toggle-text">Filters</span>
                     <span class="filter-toggle-icon">▾</span>
                 </button>
             </div>
             
             <div class="filter-controls-body" id="filterControlsBody">
                 <!-- Presets -->
-                <div class="filter-item-mobile" style="display: flex; align-items: center; gap: 8px;">
+                <div class="filter-item-mobile">
                     <span style="font-size: 0.85rem; color: var(--text-muted);">Preset:</span>
-                    <select id="date-preset" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer; transition: var(--transition);">
+                    <select id="date-preset" style="cursor: pointer;">
                         <option value="all">Full History (1985 - 2026)</option>
                         <option value="last10">Last 10 Years</option>
                         <option value="last5">Last 5 Years</option>
@@ -96,23 +96,23 @@
                 
                 <div class="filter-grid-mobile">
                     <!-- Date Pickers -->
-                    <div class="filter-item-mobile" style="display: flex; align-items: center; gap: 8px;">
+                    <div class="filter-item-mobile">
                         <span style="font-size: 0.85rem; color: var(--text-muted);">From:</span>
-                        <input type="date" id="start-date" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+                        <input type="date" id="start-date">
                     </div>
-                    <div class="filter-item-mobile" style="display: flex; align-items: center; gap: 8px;">
+                    <div class="filter-item-mobile">
                         <span style="font-size: 0.85rem; color: var(--text-muted);">To:</span>
-                        <input type="date" id="end-date" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+                        <input type="date" id="end-date">
                     </div>
                     
                     <!-- Capital Inputs -->
-                    <div class="filter-item-mobile" style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Cash:</span>
-                        <input type="number" id="starting-cash" value="0" min="0" step="1000" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; width: 100px;">
+                    <div class="filter-item-mobile">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Starting Cash:</span>
+                        <input type="number" id="starting-cash" value="0" min="0" step="1000" style="width: 80px;">
                     </div>
-                    <div class="filter-item-mobile" style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Weekly:</span>
-                        <input type="number" id="weekly-dca" value="5000" min="0" step="50" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; width: 90px;">
+                    <div class="filter-item-mobile">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Weekly DCA:</span>
+                        <input type="number" id="weekly-dca" value="5000" min="0" step="50" style="width: 75px;">
                     </div>
                 </div>
                 

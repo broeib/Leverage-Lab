@@ -441,13 +441,30 @@ td.negative { color: var(--red); }
     color: var(--text-muted);
 }
 
-/* Filter Bar Adaptations */
+/* Filter Bar Base (Desktop-first) */
+.filter-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    margin-bottom: 24px;
+    padding: 14px 20px;
+}
+
 .filter-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    width: 100%;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.filter-card-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .filter-toggle-btn {
@@ -464,6 +481,7 @@ td.negative { color: var(--red); }
     font-weight: 500;
     cursor: pointer;
     transition: var(--transition);
+    flex-shrink: 0;
 }
 
 .filter-toggle-btn:hover {
@@ -484,7 +502,51 @@ td.negative { color: var(--red); }
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 16px;
+    gap: 10px 14px;
+}
+
+.filter-grid-mobile {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+}
+
+.filter-item-mobile {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.filter-item-mobile select,
+.filter-item-mobile input {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    outline: none;
+    transition: var(--transition);
+}
+
+.filter-item-mobile select:focus,
+.filter-item-mobile input:focus {
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.filter-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-btn-group button {
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    border-radius: 8px;
 }
 
 /* Responsive Breakpoints */
@@ -590,6 +652,20 @@ td.negative { color: var(--red); }
     }
 
     /* Mobile Filter Accordion */
+    .filter-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 14px 16px !important;
+    }
+    .filter-card-header {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .filter-card-header-left {
+        gap: 8px;
+    }
     .filter-toggle-btn {
         display: inline-flex;
     }
@@ -615,6 +691,7 @@ td.negative { color: var(--red); }
     .filter-item-mobile {
         display: flex;
         flex-direction: column;
+        align-items: stretch;
         gap: 4px;
         width: 100%;
     }
@@ -622,6 +699,7 @@ td.negative { color: var(--red); }
     .filter-item-mobile input {
         width: 100% !important;
         height: 38px;
+        padding: 8px 12px;
     }
     .filter-btn-group {
         display: grid;
@@ -633,6 +711,7 @@ td.negative { color: var(--red); }
     .filter-btn-group button {
         min-height: 40px;
         justify-content: center;
+        width: 100%;
     }
 
     /* Frozen / Sticky Strategy Column on Mobile */
@@ -671,6 +750,12 @@ td.negative { color: var(--red); }
     }
     .filter-grid-mobile {
         grid-template-columns: 1fr;
+    }
+    .filter-card-header-left {
+        gap: 6px;
+    }
+    .filter-card-header-left span:first-child {
+        font-size: 0.95rem !important;
     }
 }
 

@@ -473,6 +473,235 @@
         .table-wrapper::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.15);
         }
+        /* Filter Card Base & Desktop */
+        .filter-card-sma {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem 1.25rem;
+            margin-bottom: 2rem;
+            padding: 1.25rem;
+        }
+
+        .filter-card-header-sma {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .filter-card-header-left-sma {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-toggle-btn-sma {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: #18181b;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .filter-toggle-btn-sma:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: #27272a;
+        }
+
+        .filter-toggle-icon-sma {
+            font-size: 0.75rem;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .filter-card-sma.is-expanded .filter-toggle-icon-sma {
+            transform: rotate(180deg);
+        }
+
+        .filter-controls-body-sma {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .filter-grid-mobile-sma {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .filter-item-mobile-sma {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .filter-btn-group-sma {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Mobile Responsive Adaptations */
+        @media (max-width: 900px) {
+            body {
+                padding: 1.25rem 1rem;
+            }
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+            header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+                padding-bottom: 1.25rem;
+            }
+            .strategy-toggle-wrapper {
+                width: 100%;
+                display: flex;
+            }
+            .btn-segment {
+                flex: 1;
+                text-align: center;
+                min-height: 42px;
+                padding: 8px 6px;
+                font-size: 0.8rem;
+            }
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                margin-bottom: 1.25rem;
+            }
+            .stat-card {
+                padding: 0.85rem;
+            }
+            .stat-value {
+                font-size: 1.2rem;
+            }
+            #sma-chart, .plotly-graph-div {
+                height: 320px !important;
+            }
+            .comparison-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .filter-card-sma {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+                padding: 1rem !important;
+            }
+            .filter-card-header-sma {
+                width: 100%;
+                justify-content: space-between;
+                gap: 0.5rem;
+            }
+            .filter-card-header-left-sma {
+                gap: 0.5rem;
+            }
+            .filter-toggle-btn-sma {
+                display: inline-flex;
+            }
+            .filter-controls-body-sma {
+                display: none;
+                width: 100%;
+                margin-top: 12px;
+                padding-top: 12px;
+                border-top: 1px solid rgba(255, 255, 255, 0.06);
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .filter-card-sma.is-expanded .filter-controls-body-sma {
+                display: flex;
+            }
+            .filter-grid-mobile-sma {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                width: 100%;
+            }
+            .filter-item-mobile-sma {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+                width: 100%;
+            }
+            .filter-item-mobile-sma select,
+            .filter-item-mobile-sma input {
+                width: 100% !important;
+                height: 38px;
+            }
+            .filter-btn-group-sma {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                width: 100%;
+                margin-top: 4px;
+            }
+            .filter-btn-group-sma button {
+                min-height: 40px;
+                justify-content: center;
+                width: 100%;
+            }
+            /* Frozen sticky date column on triggers table */
+            .table-wrapper table th:first-child,
+            .table-wrapper table td:first-child {
+                position: sticky;
+                left: 0;
+                z-index: 5;
+                background: #09090b;
+                box-shadow: 2px 0 6px -2px rgba(0, 0, 0, 0.6);
+            }
+            .table-wrapper table th:first-child {
+                z-index: 15;
+            }
+            .table-wrapper table tbody tr:nth-child(even) td:first-child {
+                background: #0f0f14;
+            }
+            .table-wrapper table tbody tr:hover td:first-child {
+                background: #14141c;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem 0.75rem;
+            }
+            h1 {
+                font-size: 1.35rem;
+            }
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            #sma-chart, .plotly-graph-div {
+                height: 290px !important;
+            }
+            .card {
+                padding: 1rem;
+                border-radius: 12px;
+            }
+            .filter-grid-mobile-sma {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -502,39 +731,47 @@
         </div>
 
         <!-- Interactive Date Range Selector -->
-        <div class="card" style="margin-bottom: 2rem; padding: 1.25rem;">
-            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div class="card filter-card-sma" id="filterCardSma">
+            <div class="filter-card-header-sma">
+                <div class="filter-card-header-left-sma">
                     <span style="font-size: 1.1rem; font-weight: 700; color: #f1f5f9;">📅 Filter Date Range</span>
                     <span style="font-size: 0.8rem; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px;" id="data-range-label"></span>
                 </div>
+                <button class="filter-toggle-btn-sma" id="filterToggleBtnSma" onclick="toggleMobileFilterSma()" aria-expanded="false" aria-controls="filterControlsBodySma">
+                    <span>Filters</span>
+                    <span class="filter-toggle-icon-sma">▼</span>
+                </button>
+            </div>
+            
+            <div class="filter-controls-body-sma" id="filterControlsBodySma">
+                <!-- Presets -->
+                <div class="filter-item-mobile-sma" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted); white-space: nowrap;">Preset:</span>
+                    <select id="date-preset" style="background: #111827; border: 1px solid var(--border-color); color: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer; transition: border-color 0.2s;">
+                        <option value="all">Full History (1986 - 2026)</option>
+                        <option value="last10">Last 10 Years</option>
+                        <option value="last5">Last 5 Years</option>
+                        <option value="covid">Covid Cycle (2020 - 2022)</option>
+                        <option value="tech_rally">Recent Tech Rally (2023 - 2026)</option>
+                        <option value="bear_defense">2022 Bear Market</option>
+                        <option value="custom" disabled>Custom Range (Chart Zoom)</option>
+                    </select>
+                </div>
                 
-                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1.1rem;">
-                    <!-- Presets -->
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Preset:</span>
-                        <select id="date-preset" style="background: #111827; border: 1px solid var(--border-color); color: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer; transition: border-color 0.2s;">
-                            <option value="all">Full History (1986 - 2026)</option>
-                            <option value="last10">Last 10 Years</option>
-                            <option value="last5">Last 5 Years</option>
-                            <option value="covid">Covid Cycle (2020 - 2022)</option>
-                            <option value="tech_rally">Recent Tech Rally (2023 - 2026)</option>
-                            <option value="bear_defense">2022 Bear Market</option>
-                            <option value="custom" disabled>Custom Range (Chart Zoom)</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Date Pickers -->
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">From:</span>
+                <!-- Date Pickers -->
+                <div class="filter-grid-mobile-sma">
+                    <div class="filter-item-mobile-sma" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted); white-space: nowrap;">From:</span>
                         <input type="date" id="start-date" style="background: #111827; border: 1px solid var(--border-color); color: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; outline: none; transition: border-color 0.2s;">
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">To:</span>
+                    <div class="filter-item-mobile-sma" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted); white-space: nowrap;">To:</span>
                         <input type="date" id="end-date" style="background: #111827; border: 1px solid var(--border-color); color: #ffffff; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; outline: none; transition: border-color 0.2s;">
                     </div>
-                    
-                    <button class="btn-reset" onclick="applyCustomDateFilter()" style="background: var(--accent-blue); border: none; color: #0b0f19; padding: 0.45rem 1.2rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9';" onmouseout="this.style.opacity='1';">Apply Filter</button>
+                </div>
+                
+                <div class="filter-btn-group-sma" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button class="btn-reset" onclick="applyCustomDateFilter()" style="background: var(--blue); border: none; color: #ffffff; padding: 0.45rem 1.2rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9';" onmouseout="this.style.opacity='1';">Apply Filter</button>
                     <button class="btn-reset" onclick="resetDateFilter()">Reset</button>
                 </div>
             </div>
@@ -1314,6 +1551,19 @@
             applyCustomDateFilter();
         }
 
+        function toggleMobileFilterSma() {
+            const card = document.getElementById('filterCardSma');
+            const btn = document.getElementById('filterToggleBtnSma');
+            if (!card) return;
+            const isExpanded = card.classList.toggle('is-expanded');
+            if (btn) {
+                btn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+                const text = btn.querySelector('span:first-child');
+                if (text) text.textContent = isExpanded ? 'Hide Filters' : 'Filters';
+            }
+        }
+        window.toggleMobileFilterSma = toggleMobileFilterSma;
+
         // Initialize document & event handlers
         document.addEventListener("DOMContentLoaded", function() {
             let gd = document.getElementById('sma-chart');
@@ -1362,6 +1612,11 @@
                     } else if (eventData['xaxis.autorange'] === true) {
                         resetDateFilter();
                     }
+                });
+
+                // Responsive chart resize on orientation change / window resize
+                window.addEventListener('resize', function() {
+                    Plotly.Plots.resize(gd);
                 });
             }
             
