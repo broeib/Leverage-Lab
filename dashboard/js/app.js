@@ -2252,6 +2252,23 @@
     }
 
     // =========================================================================
+    // MOBILE UTILS
+    // =========================================================================
+
+    function toggleMobileFilter() {
+        const card = document.getElementById('filterCard');
+        const btn = document.getElementById('filterToggleBtn');
+        if (!card) return;
+        const isExpanded = card.classList.toggle('is-expanded');
+        if (btn) {
+            btn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+            const text = btn.querySelector('.filter-toggle-text');
+            if (text) text.textContent = isExpanded ? 'Hide Filters' : 'Adjust Filters';
+        }
+    }
+    window.toggleMobileFilter = toggleMobileFilter;
+
+    // =========================================================================
     // INIT
     // =========================================================================
 

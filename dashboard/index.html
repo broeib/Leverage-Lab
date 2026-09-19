@@ -64,50 +64,59 @@
         </section>
 
         <!-- Interactive Date Range Selector -->
-        <div class="card" style="margin-bottom: 24px; padding: 20px;">
-            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="card filter-card" id="filterCard" style="margin-bottom: 24px; padding: 18px 20px;">
+            <div class="filter-card-header">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <span style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);">Filter Date Range</span>
                     <span style="font-size: 0.8rem; color: var(--text-muted); background: var(--bg-secondary); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); font-family: var(--font-mono);" id="data-range-label">-- to --</span>
                 </div>
                 
-                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px;">
-                    <!-- Presets -->
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Preset:</span>
-                        <select id="date-preset" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer; transition: var(--transition);">
-                            <option value="all">Full History (1985 - 2026)</option>
-                            <option value="last10">Last 10 Years</option>
-                            <option value="last5">Last 5 Years</option>
-                            <option value="covid">Covid Cycle (2020 - 2022)</option>
-                            <option value="tech_rally">Recent Tech Rally (2023 - 2026)</option>
-                            <option value="bear_defense">2022 Bear Market</option>
-                            <option value="gfc">Financial Crisis (2007 - 2009)</option>
-                            <option value="dotcom">Dot-com Crash (2000 - 2002)</option>
-                            <option value="custom" disabled>Custom Range</option>
-                        </select>
-                    </div>
-                    
+                <button class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleMobileFilter()" type="button" aria-expanded="false" aria-label="Toggle filter controls">
+                    <span class="filter-toggle-text">Adjust Filters</span>
+                    <span class="filter-toggle-icon">▾</span>
+                </button>
+            </div>
+            
+            <div class="filter-controls-body" id="filterControlsBody">
+                <!-- Presets -->
+                <div class="filter-item-mobile" style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Preset:</span>
+                    <select id="date-preset" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer; transition: var(--transition);">
+                        <option value="all">Full History (1985 - 2026)</option>
+                        <option value="last10">Last 10 Years</option>
+                        <option value="last5">Last 5 Years</option>
+                        <option value="covid">Covid Cycle (2020 - 2022)</option>
+                        <option value="tech_rally">Recent Tech Rally (2023 - 2026)</option>
+                        <option value="bear_defense">2022 Bear Market</option>
+                        <option value="gfc">Financial Crisis (2007 - 2009)</option>
+                        <option value="dotcom">Dot-com Crash (2000 - 2002)</option>
+                        <option value="custom" disabled>Custom Range</option>
+                    </select>
+                </div>
+                
+                <div class="filter-grid-mobile">
                     <!-- Date Pickers -->
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="filter-item-mobile" style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 0.85rem; color: var(--text-muted);">From:</span>
                         <input type="date" id="start-date" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none;">
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="filter-item-mobile" style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 0.85rem; color: var(--text-muted);">To:</span>
                         <input type="date" id="end-date" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none;">
                     </div>
                     
                     <!-- Capital Inputs -->
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Starting Cash:</span>
+                    <div class="filter-item-mobile" style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Cash:</span>
                         <input type="number" id="starting-cash" value="0" min="0" step="1000" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; width: 100px;">
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Weekly DCA:</span>
+                    <div class="filter-item-mobile" style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Weekly:</span>
                         <input type="number" id="weekly-dca" value="5000" min="0" step="50" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; width: 90px;">
                     </div>
-                    
+                </div>
+                
+                <div class="filter-btn-group">
                     <button class="chart-btn active" onclick="applyCustomDateFilter()" style="background: var(--accent-1); border: none; color: #ffffff; font-weight: 600; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Apply Filter</button>
                     <button class="chart-btn" onclick="resetDateFilter()">Reset</button>
                 </div>

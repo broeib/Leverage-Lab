@@ -76,3 +76,31 @@ A disciplined, high-craft dark interface designed for analytical precision. Zero
 - Duration: `150ms` – `200ms`
 - Timing Function: `cubic-bezier(0.16, 1, 0.3, 1)` (smooth deceleration)
 - *Strict Rule: Zero bounce or elastic spring curves.*
+
+---
+
+## Responsive & Mobile Architecture
+
+### Breakpoint Conventions
+- **Desktop Wide**: `> 1100px` (Full multi-column dashboard grid, persistent full filters, 550px charts).
+- **Tablet / Small Laptop**: `<= 900px` (2-column stats, stacked secondary HUDs, single-column layouts).
+- **Mobile Viewports**: `<= 768px` (Single column, horizontal swipeable navigation, sticky table column, bottom-sheet modals).
+- **Compact Mobile**: `<= 480px` (1-column stat cards, full-width buttons, 290px compact charts, condensed padding).
+
+### Mobile Interaction Patterns
+1. **Touch Target Floor**:
+   - All interactive controls (buttons, tabs, segment controls, dropdown triggers, close buttons) adhere to a minimum touch floor of `42px–44px` with adequate tap padding.
+2. **Horizontal Pill Tabs**:
+   - Navigation tabs on mobile convert to horizontally swipeable scrollbars with `-webkit-overflow-scrolling: touch` and hidden scrollbars (`scrollbar-width: none`).
+3. **Sticky Column Data Tables**:
+   - Data tables retain the primary descriptor column (Strategy / Date) locked to the left via `position: sticky; left: 0;` with an elevated background (`#121215` / `#09090b`), hairline right border, and subtle drop shadow while performance metrics scroll smoothly horizontally.
+4. **Collapsible Filter Accordion**:
+   - Date range and universe selectors collapse into an interactive summary row on mobile, expanding smoothly on user demand to preserve vertical viewport for analytics.
+5. **Adaptive Chart Heights & Resize Observers**:
+   - Desktop: `550px`
+   - Mobile (`<= 768px`): `320px`
+   - Compact (`<= 480px`): `290px`
+   - Charts dynamically re-render on orientation and dimension changes via `Plotly.Plots.resize`.
+6. **Bottom Sheet Modals**:
+   - On screens `<= 768px`, dialog modals transition from centered desktop cards into slide-up bottom sheets (`max-height: 85vh`, rounded top corners `16px`, sticky header with a `44px` touch close target, safe-area inset bottom padding).
+
