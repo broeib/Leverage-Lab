@@ -22,6 +22,11 @@ The data layer maps real-world physical tickers into generic *roles* (`1x`, `2x`
   * `USD` (2x, $0.95\%$ annual drag)
   * `SOXL` (3x, $1.10\%$ annual drag)
   * Underlying Index: `%5ESOX` (`^SOX`), backfilled to **May 1994** (32+ years).
+* **🏛️ S&P 500 Universe (`spy`)**:
+  * `SPY` (1x, $0.10\%$ annual drag)
+  * `SSO` (2x, $0.75\%$ annual drag)
+  * `UPRO` (3x, $1.50\%$ annual drag)
+  * Underlying Index: `%5EGSPC` (`^GSPC`), backfilled to **October 1985** (40+ years).
 
 ### 2. Mathematical Backward-Compounding Engine (40-Year History)
 To simulate performance prior to the modern ETF inceptions (e.g. `TQQQ` in 2010), the system implements a **synthetic backward-compounding price generator** in `data/download_data.py`. For any pre-inception day $t$:
