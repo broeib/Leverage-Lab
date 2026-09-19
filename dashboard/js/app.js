@@ -3,9 +3,9 @@
     // =========================================================================
 
     const STRATEGY_COLORS = [
-        '#818cf8', '#f472b6', '#34d399', '#fbbf24', '#60a5fa',
-        '#fb923c', '#c084fc', '#22d3ee', '#a3e635', '#f87171',
-        '#e879f9',
+        '#2563eb', '#10b981', '#f59e0b', '#0284c7', '#ea580c',
+        '#14b8a6', '#84cc16', '#e11d48', '#0d9488', '#475569',
+        '#d97706',
     ];
 
     // Dynamic — updated when universe is loaded
@@ -405,7 +405,7 @@
         if (key === 'qqq') {
             titleEl.textContent = 'Leverage Lab';
         } else if (key === 'soxx') {
-            titleEl.textContent = 'Leverage Lab — Semiconductors';
+            titleEl.textContent = 'Leverage Lab: Semiconductors';
         } else {
             titleEl.textContent = 'Leverage Lab';
         }
@@ -734,13 +734,13 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                        titleColor: '#f1f5f9',
-                        bodyColor: '#94a3b8',
-                        borderColor: '#2a3050',
+                        backgroundColor: 'rgba(18, 18, 21, 0.96)',
+                        titleColor: '#fafafa',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
                         borderWidth: 1,
                         padding: 12,
-                        bodyFont: { family: 'Inter' },
+                        bodyFont: { family: 'Figtree' },
                         callbacks: {
                             label: ctx => `${ctx.dataset.label}: $${Math.round(ctx.parsed.y).toLocaleString()}`
                         }
@@ -750,14 +750,14 @@
                     x: {
                         type: 'time',
                         time: { unit: 'year' },
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
-                        ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } }
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 11 } }
                     },
                     y: {
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
                         ticks: {
-                            color: '#64748b',
-                            font: { family: 'Inter', size: 11 },
+                            color: '#9ca3af',
+                            font: { family: 'JetBrains Mono', size: 11 },
                             callback: v => '$' + (v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v)
                         }
                     }
@@ -815,13 +815,13 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                        titleColor: '#f1f5f9',
-                        bodyColor: '#94a3b8',
-                        borderColor: '#2a3050',
+                        backgroundColor: 'rgba(18, 18, 21, 0.96)',
+                        titleColor: '#fafafa',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
                         borderWidth: 1,
                         padding: 12,
-                        bodyFont: { family: 'Inter' },
+                        bodyFont: { family: 'Figtree' },
                         callbacks: {
                             label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`
                         }
@@ -831,14 +831,14 @@
                     x: {
                         type: 'time',
                         time: { unit: 'year' },
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
-                        ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } }
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 11 } }
                     },
                     y: {
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
                         ticks: {
-                            color: '#64748b',
-                            font: { family: 'Inter', size: 11 },
+                            color: '#9ca3af',
+                            font: { family: 'JetBrains Mono', size: 11 },
                             callback: v => v.toFixed(0) + '%'
                         }
                     }
@@ -941,16 +941,16 @@
                     legend: {
                         display: true,
                         position: 'top',
-                        labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 }, usePointStyle: true }
+                        labels: { color: '#cbd5e1', font: { family: 'Figtree', size: 12 }, usePointStyle: true }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                        titleColor: '#f1f5f9',
-                        bodyColor: '#94a3b8',
-                        borderColor: '#2a3050',
+                        backgroundColor: 'rgba(18, 18, 21, 0.96)',
+                        titleColor: '#fafafa',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
                         borderWidth: 1,
                         padding: 12,
-                        bodyFont: { family: 'Inter' },
+                        bodyFont: { family: 'Figtree' },
                         callbacks: {
                             label: function(ctx) {
                                 const label = ctx.dataset.label;
@@ -964,17 +964,17 @@
                     x: {
                         type: 'time',
                         time: { unit: 'year' },
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
-                        ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } }
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 11 } }
                     },
                     y: {
                         stacked: true,
                         min: 0,
                         max: 100,
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
                         ticks: {
-                            color: '#64748b',
-                            font: { family: 'Inter', size: 11 },
+                            color: '#9ca3af',
+                            font: { family: 'JetBrains Mono', size: 11 },
                             callback: v => v + '%'
                         }
                     }
@@ -1012,13 +1012,13 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                        titleColor: '#f1f5f9',
-                        bodyColor: '#94a3b8',
-                        borderColor: '#2a3050',
+                        backgroundColor: 'rgba(18, 18, 21, 0.96)',
+                        titleColor: '#fafafa',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
                         borderWidth: 1,
                         padding: 12,
-                        bodyFont: { family: 'Inter' },
+                        bodyFont: { family: 'Figtree' },
                         callbacks: {
                             title: ctx => ctx[0].dataset.label,
                             label: ctx => [
@@ -1030,14 +1030,14 @@
                 },
                 scales: {
                     x: {
-                        title: { display: true, text: 'Max Drawdown (%)', color: '#64748b', font: { family: 'Inter' } },
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
-                        ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } }
+                        title: { display: true, text: 'Max Drawdown (%)', color: '#9ca3af', font: { family: 'Figtree' } },
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 11 } }
                     },
                     y: {
-                        title: { display: true, text: 'Total Return (%)', color: '#64748b', font: { family: 'Inter' } },
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
-                        ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } }
+                        title: { display: true, text: 'Total Return (%)', color: '#9ca3af', font: { family: 'Figtree' } },
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 11 } }
                     }
                 }
             }
@@ -1067,13 +1067,13 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                        titleColor: '#f1f5f9',
-                        bodyColor: '#94a3b8',
-                        borderColor: '#2a3050',
+                        backgroundColor: 'rgba(18, 18, 21, 0.96)',
+                        titleColor: '#fafafa',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
                         borderWidth: 1,
                         padding: 12,
-                        bodyFont: { family: 'Inter' },
+                        bodyFont: { family: 'Figtree' },
                         callbacks: {
                             title: ctx => ctx[0].dataset.label,
                             label: ctx => [
@@ -1085,14 +1085,14 @@
                 },
                 scales: {
                     x: {
-                        title: { display: true, text: 'Volatility (%)', color: '#64748b', font: { family: 'Inter' } },
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
-                        ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } }
+                        title: { display: true, text: 'Volatility (%)', color: '#9ca3af', font: { family: 'Figtree' } },
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 11 } }
                     },
                     y: {
-                        title: { display: true, text: 'Sharpe Ratio', color: '#64748b', font: { family: 'Inter' } },
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
-                        ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } }
+                        title: { display: true, text: 'Sharpe Ratio', color: '#9ca3af', font: { family: 'Figtree' } },
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 11 } }
                     }
                 }
             }
@@ -1638,13 +1638,13 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                        titleColor: '#f1f5f9',
-                        bodyColor: '#94a3b8',
-                        borderColor: '#2a3050',
+                        backgroundColor: 'rgba(18, 18, 21, 0.96)',
+                        titleColor: '#fafafa',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
                         borderWidth: 1,
                         padding: 12,
-                        bodyFont: { family: 'Inter' },
+                        bodyFont: { family: 'Figtree' },
                         callbacks: {
                             label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y >= 0 ? '+' : ''}${ctx.parsed.y.toFixed(1)}%`
                         }
@@ -1654,14 +1654,14 @@
                     x: {
                         type: 'time',
                         time: { unit: 'year' },
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
-                        ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } }
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 11 } }
                     },
                     y: {
-                        grid: { color: 'rgba(42, 48, 80, 0.3)' },
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
                         ticks: {
-                            color: '#64748b',
-                            font: { family: 'Inter', size: 11 },
+                            color: '#9ca3af',
+                            font: { family: 'JetBrains Mono', size: 11 },
                             callback: v => (v >= 0 ? '+' : '') + v.toFixed(0) + '%'
                         }
                     }
@@ -2134,7 +2134,7 @@
         }
 
         // Active range parameters
-        document.getElementById('modalActivePeriod').textContent = (ACTIVE_RANGE.start || "—") + " to " + (ACTIVE_RANGE.end || "—");
+        document.getElementById('modalActivePeriod').textContent = (ACTIVE_RANGE.start || "--") + " to " + (ACTIVE_RANGE.end || "--");
         const weeklyDCA = parseFloat(document.getElementById('weekly-dca').value) || 0.0;
         document.getElementById('modalActiveDCA').textContent = "$" + weeklyDCA.toLocaleString() + "/wk";
 

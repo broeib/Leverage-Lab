@@ -4,28 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SMA Trend Regime Simulator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-main: #060814;
-            --bg-card: rgba(15, 23, 42, 0.4);
+            --bg-main: #09090b;
+            --bg-card: #121215;
             --border-color: rgba(255, 255, 255, 0.08);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --text-main: #fafafa;
+            --text-muted: #a1a1aa;
             --green: #10b981;
             --yellow: #f59e0b;
             --red: #f43f5e;
-            --purple: #a855f7;
-            --blue: #38bdf8;
-            --accent-blue: #38bdf8;
-            --gradient-active: linear-gradient(135deg, #38bdf8, #818cf8);
+            --purple: #8b5cf6;
+            --blue: #2563eb;
+            --accent-blue: #3b82f6;
+            --font-sans: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
         }
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: var(--font-sans);
         }
         
         body {
@@ -33,9 +36,6 @@
             color: var(--text-main);
             padding: 2rem;
             min-height: 100vh;
-            background-image: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 40%),
-                              radial-gradient(circle at 90% 80%, rgba(244, 63, 94, 0.06) 0%, transparent 40%);
-            background-attachment: fixed;
         }
         
         .container {
@@ -55,62 +55,59 @@
         }
         
         h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #fafafa;
             letter-spacing: -0.02em;
         }
         
         .back-link {
-            color: #38bdf8;
+            color: #3b82f6;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 0.95rem;
+            font-weight: 500;
+            font-size: 0.875rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            transition: color 0.2s;
+            transition: color 0.15s;
         }
         
         .back-link:hover {
-            color: #818cf8;
+            color: #60a5fa;
         }
         
         /* Segmented Controller */
         .strategy-toggle-wrapper {
             display: flex;
             align-items: center;
-            background: rgba(15, 23, 42, 0.6);
+            background: #18181b;
             border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 4px;
-            gap: 4px;
-            backdrop-filter: blur(12px);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 2px;
         }
         
         .btn-segment {
-            padding: 8px 20px;
+            padding: 7px 16px;
             border: none;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 700;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
             cursor: pointer;
             color: var(--text-muted);
             background: transparent;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
         }
         
         .btn-segment:hover:not(.active) {
             color: var(--text-main);
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.04);
         }
         
         .btn-segment.active {
-            background: var(--gradient-active);
-            color: #030712;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25);
+            background: #1d4ed8;
+            color: #ffffff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
         
         /* Dashboard Layout Split */
@@ -174,8 +171,6 @@
             font-size: 0.8rem;
             color: var(--text-muted);
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
         
         .stat-value {
@@ -355,10 +350,8 @@
             background-color: rgba(10, 15, 30, 0.9);
             padding: 0.9rem;
             font-size: 0.8rem;
-            font-weight: 700;
+            font-weight: 600;
             color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
             position: sticky;
             top: 0;
             z-index: 10;
@@ -433,9 +426,7 @@
         
         .comp-card-title {
             font-size: 0.95rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            font-weight: 600;
             color: var(--accent-blue);
             border-bottom: 1px solid rgba(255,255,255,0.04);
             padding-bottom: 0.5rem;
@@ -842,7 +833,7 @@
                     <div style="border-bottom: 1px solid var(--border-color); margin: 0.2rem 0;"></div>
                     
                     <!-- Strategy Parameters -->
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: #ffffff;">
                         Standard SMA Crossover Rules:
                     </div>
                     
@@ -911,8 +902,8 @@
                     <div style="border-bottom: 1px solid var(--border-color); margin: 0.2rem 0;"></div>
                     
                     <!-- Strategy Parameters -->
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.05em;">
-                        Enhanced Quant SMA checklist:
+                    <div style="font-size: 0.85rem; font-weight: 600; color: #ffffff;">
+                        Enhanced Quant SMA Checklist:
                     </div>
                     
                     <div style="display: flex; flex-direction: column; gap: 0.45rem;">

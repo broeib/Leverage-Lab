@@ -6,7 +6,8 @@
     <title>QQQ Leveraged ETF Backtesting Dashboard</title>
     <meta name="description" content="Interactive backtesting dashboard for QQQ, QLD, and TQQQ leveraged ETF rebalancing strategies">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
@@ -17,35 +18,35 @@
     <header class="hero">
         <div class="hero-content">
             <div class="universe-toggle" id="universeToggle">
-                <button class="active" data-universe="qqq">📈 NASDAQ-100 &nbsp;(QQQ / QLD / TQQQ)</button>
-                <button data-universe="soxx">🔬 Semiconductors &nbsp;(SOXX / USD / SOXL)</button>
+                <button class="active" data-universe="qqq">NASDAQ-100 (QQQ / QLD / TQQQ)</button>
+                <button data-universe="soxx">Semiconductors (SOXX / USD / SOXL)</button>
             </div>
             <h1 id="heroTitle">Leverage Lab</h1>
             <p class="subtitle" id="heroSubtitle">
                 Backtesting leveraged ETF rebalancing strategies across QQQ (1x), QLD (2x), and TQQQ (3x)
                 with $5,000 weekly dollar-cost averaging.
             </p>
-            <div style="margin-top: 16px; margin-bottom: 8px;">
-                <a href="sma_simulator.html" style="display: inline-flex; align-items: center; gap: 8px; color: #38bdf8; text-decoration: none; font-weight: 600; font-size: 0.9rem; border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 16px; border-radius: 9999px; background: rgba(56, 189, 248, 0.05); transition: all 0.2s;" onmouseover="this.style.background='rgba(56, 189, 248, 0.15)'; this.style.borderColor='#38bdf8';" onmouseout="this.style.background='rgba(56, 189, 248, 0.05)'; this.style.borderColor='rgba(56, 189, 248, 0.3)';">
-                    📊 Launch SMA Trend Regime Visual Simulator →
+            <div style="margin-top: 14px; margin-bottom: 8px;">
+                <a href="sma_simulator.html" style="display: inline-flex; align-items: center; gap: 6px; color: var(--accent-2); text-decoration: none; font-weight: 500; font-size: 0.85rem; border: 1px solid var(--border); padding: 6px 14px; border-radius: var(--radius-sm); background: var(--bg-card); transition: var(--transition);">
+                    Launch SMA Trend Regime Visual Simulator &rarr;
                 </a>
             </div>
             <div class="hero-stats" id="heroStats">
                 <div class="hero-stat">
                     <div class="label">Period</div>
-                    <div class="value" id="statPeriod">—</div>
+                    <div class="value" id="statPeriod">--</div>
                 </div>
                 <div class="hero-stat">
                     <div class="label">Total Invested</div>
-                    <div class="value" id="statInvested">—</div>
+                    <div class="value" id="statInvested">--</div>
                 </div>
                 <div class="hero-stat">
                     <div class="label">Strategies Tested</div>
-                    <div class="value" id="statCount">—</div>
+                    <div class="value" id="statCount">--</div>
                 </div>
                 <div class="hero-stat">
                     <div class="label">Best Return</div>
-                    <div class="value" id="statBestReturn" style="color: var(--green)">—</div>
+                    <div class="value" id="statBestReturn" style="color: var(--green)">--</div>
                 </div>
             </div>
         </div>
@@ -56,7 +57,7 @@
         <!-- Best Strategy Awards -->
         <section class="section" id="awardsSection" style="display:none;">
             <div class="section-header">
-                <h2>🏆 Top Performers</h2>
+                <h2>Top Performers</h2>
                 <span class="badge">Awards</span>
             </div>
             <div class="best-cards" id="bestCards"></div>
@@ -66,8 +67,8 @@
         <div class="card" style="margin-bottom: 24px; padding: 20px;">
             <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">📅 Filter Date Range</span>
-                    <span style="font-size: 0.8rem; color: var(--text-muted); background: rgba(255,255,255,0.04); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);" id="data-range-label">— to —</span>
+                    <span style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);">Filter Date Range</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); background: var(--bg-secondary); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); font-family: var(--font-mono);" id="data-range-label">-- to --</span>
                 </div>
                 
                 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px;">
@@ -107,7 +108,7 @@
                         <input type="number" id="weekly-dca" value="5000" min="0" step="50" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; width: 90px;">
                     </div>
                     
-                    <button class="chart-btn active" onclick="applyCustomDateFilter()" style="background: var(--accent-1); border: none; color: #0a0e1a; font-weight: 600; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Apply Filter</button>
+                    <button class="chart-btn active" onclick="applyCustomDateFilter()" style="background: var(--accent-1); border: none; color: #ffffff; font-weight: 600; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Apply Filter</button>
                     <button class="chart-btn" onclick="resetDateFilter()">Reset</button>
                 </div>
             </div>
@@ -121,7 +122,7 @@
             <button class="tab" data-tab="allocation">Allocations</button>
             <button class="tab" data-tab="risk">Risk Analysis</button>
             <button class="tab" data-tab="simulations">Horizon & Regime Analysis</button>
-            <button class="tab" data-tab="definitions">📚 Strategy Guide</button>
+            <button class="tab" data-tab="definitions">Strategy Guide</button>
         </div>
 
         <!-- Overview Tab -->
@@ -245,8 +246,8 @@
                 </div>
 
                 <div class="card">
-                    <h3 style="font-size: 1.05rem; color: var(--text-primary); margin: 8px 0 16px 0; font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
-                        <span>📈 Rolling Horizon Returns Curve</span>
+                    <h3 style="font-size: 1.05rem; color: var(--text-primary); margin: 8px 0 16px 0; font-weight: 600; display: flex; align-items: center; justify-content: space-between;">
+                        <span>Rolling Horizon Returns Curve</span>
                         <span style="font-size: 0.78rem; font-weight: 400; color: var(--text-muted);">X-Axis: DCA Start Date | Y-Axis: Horizon Profit %</span>
                     </h3>
                     <div class="chart-container" style="height: 380px;">
@@ -255,8 +256,8 @@
                 </div>
 
                 <div class="card" style="margin-top: 24px;">
-                    <h3 style="font-size: 1.05rem; color: var(--text-primary); margin: 8px 0 16px 0; font-weight: 700;">
-                        📊 Horizon Performance Distributions & Risk
+                    <h3 style="font-size: 1.05rem; color: var(--text-primary); margin: 8px 0 16px 0; font-weight: 600;">
+                        Horizon Performance Distributions & Risk
                     </h3>
                     <div class="table-wrapper">
                         <table class="regime-table">
@@ -313,7 +314,7 @@
                                         <div>AI Tech Revolution Rally</div>
                                         <div style="font-size: 0.7rem; font-weight: 400; color: var(--text-muted); margin-top: 2px;">2023 - 2026</div>
                                     </th>
-                                    <th style="font-weight: 700; color: var(--accent-2);">Avg Regime Rank</th>
+                                    <th style="font-weight: 600; color: var(--accent-2);">Avg Regime Rank</th>
                                 </tr>
                             </thead>
                             <tbody id="regimeTableBody">
@@ -329,7 +330,7 @@
         <div class="tab-content" id="tab-definitions">
             <section class="section">
                 <div class="section-header">
-                    <h2>📚 Strategy Guide & Mechanics</h2>
+                    <h2>Strategy Guide & Mechanics</h2>
                     <span class="badge">Definitions</span>
                 </div>
                 <div style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.92rem; max-width: 800px; line-height: 1.5;">
@@ -364,7 +365,7 @@
             <div class="strat-modal-body">
                 <!-- Left Column: Core Info & Mechanics -->
                 <div>
-                    <div class="strat-modal-section-title">Philosophy & Philosophy</div>
+                    <div class="strat-modal-section-title">Core Philosophy & Rationale</div>
                     <p class="strat-modal-para" id="modalPhilosophy"></p>
 
                     <div class="strat-modal-section-title">Core Mechanism</div>
@@ -378,38 +379,38 @@
 
                 <!-- Right Column: Live Performance & Profiles -->
                 <div>
-                    <div class="strat-modal-section-title">⚡ Live Backtest Performance</div>
+                    <div class="strat-modal-section-title">Live Backtest Performance</div>
                     <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: -6px; margin-bottom: 16px; line-height: 1.3;">
-                        Numbers below correspond to the active filter: <strong style="color: var(--accent-1);"><span id="modalActivePeriod">—</span></strong> with DCA of <strong style="color: var(--green);"><span id="modalActiveDCA">—</span></strong>.
+                        Numbers below correspond to the active filter: <strong style="color: var(--accent-1);"><span id="modalActivePeriod">--</span></strong> with DCA of <strong style="color: var(--green);"><span id="modalActiveDCA">--</span></strong>.
                     </div>
                     <div class="modal-perf-grid">
                         <div class="modal-perf-card highlight">
                             <div class="label">Total Return</div>
-                            <div class="value" id="modalPerfReturn">—</div>
+                            <div class="value" id="modalPerfReturn">--</div>
                         </div>
                         <div class="modal-perf-card highlight">
                             <div class="label">CAGR</div>
-                            <div class="value" id="modalPerfCAGR">—</div>
+                            <div class="value" id="modalPerfCAGR">--</div>
                         </div>
                         <div class="modal-perf-card">
                             <div class="label">Max Drawdown</div>
-                            <div class="value" style="color: var(--red)" id="modalPerfDrawdown">—</div>
+                            <div class="value" style="color: var(--red)" id="modalPerfDrawdown">--</div>
                         </div>
                         <div class="modal-perf-card">
                             <div class="label">Sharpe Ratio</div>
-                            <div class="value" id="modalPerfSharpe">—</div>
+                            <div class="value" id="modalPerfSharpe">--</div>
                         </div>
                         <div class="modal-perf-card">
                             <div class="label">Sortino Ratio</div>
-                            <div class="value" id="modalPerfSortino">—</div>
+                            <div class="value" id="modalPerfSortino">--</div>
                         </div>
                         <div class="modal-perf-card">
                             <div class="label">Calmar Ratio</div>
-                            <div class="value" id="modalPerfCalmar">—</div>
+                            <div class="value" id="modalPerfCalmar">--</div>
                         </div>
                         <div class="modal-perf-card" style="grid-column: span 2;">
                             <div class="label">Total Rebalances</div>
-                            <div class="value" style="font-size: 1.1rem" id="modalPerfRebalances">—</div>
+                            <div class="value" style="font-size: 1.1rem" id="modalPerfRebalances">--</div>
                         </div>
                     </div>
 
