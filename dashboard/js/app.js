@@ -90,14 +90,14 @@
             const recInvested = [];
             const recDrawdowns = [];
 
-            let peakVpd = 0.0;
+            let twrUnit = 1.0;
+            let peakTwrUnit = 1.0;
 
             // Day 0: Start with startingCash + first weekly contribution
             let currentInvested = startingCash + userWeeklyDca;
             let currentValue = startingCash + userWeeklyDca;
             recValues.push(currentValue);
             recInvested.push(currentInvested);
-            peakVpd = currentInvested > 0 ? currentValue / currentInvested : 0;
             recDrawdowns.push(0.0);
 
             for (let k = 1; k < recDates.length; k++) {
@@ -120,13 +120,13 @@
                 currentValue = currentValue * F_t + actual_C_t;
                 currentInvested += actual_C_t;
 
-                // Track drawdown on per-dollar-invested basis (not masked by DCA)
-                const vpd = currentInvested > 0 ? currentValue / currentInvested : 0;
-                if (vpd > peakVpd) {
-                    peakVpd = vpd;
+                // Track drawdown on Time-Weighted Return (TWR) basis (not masked by DCA)
+                twrUnit *= F_t;
+                if (twrUnit > peakTwrUnit) {
+                    peakTwrUnit = twrUnit;
                 }
 
-                const dd = peakVpd > 0 ? ((peakVpd - vpd) / peakVpd) * 100.0 : 0.0;
+                const dd = peakTwrUnit > 0 ? ((peakTwrUnit - twrUnit) / peakTwrUnit) * 100.0 : 0.0;
 
                 recValues.push(parseFloat(currentValue.toFixed(2)));
                 recInvested.push(parseFloat(currentInvested.toFixed(2)));
@@ -154,12 +154,10 @@
             const endD = new Date(recDates[recDates.length - 1]);
             const years = Math.max(0.01, (endD - startD) / (365.25 * 24 * 60 * 60 * 1000));
 
-            // CAGR: use value-per-dollar growth over the full period
+            // CAGR: use Time-Weighted Return (TWR) growth over the full period
             let cagr = 0.0;
-            if (years > 0 && totalInvested > 0 && recInvested[0] > 0) {
-                const vpdStart = recValues[0] / recInvested[0];
-                const vpdEnd = finalValue / totalInvested;
-                cagr = vpdStart > 0 ? (Math.pow(vpdEnd / vpdStart, 1.0 / years) - 1.0) * 100.0 : 0.0;
+            if (years > 0) {
+                cagr = (Math.pow(twrUnit, 1.0 / years) - 1.0) * 100.0;
                 cagr = Math.min(999.9, Math.max(-99.9, cagr));
             }
 
@@ -1844,7 +1842,54 @@
             pros: ["Almost entirely eliminates whipsaw losses near moving averages.", "Earns steady interest yield in bear markets while maintaining zero market exposure.", "Elite drawdowns and risk-adjusted performance."],
             cons: ["Extremely complex; entry can be slightly delayed during highly explosive, V-shaped market reversals."]
         },
+        "4-Tier Graduated Leverage": {
+            tagline: "4-Tier Stepped De-risking Ladder (TQQQ / QLD / QQQ / SPAXX)",
+            style: "Regime-Switching Trend Following",
+            complexity: "Moderate",
+            indicators: ["SMA 50 (QQQ)", "SMA 200 (QQQ)", "SPAXX Money Market Sweep"],
+            philosophy: "A graduated de-escalation architecture that replaces binary all-or-nothing shocks with a 4-tier ladder. It eliminates the fatal flaw of holding 1x equities in structural bear markets (which produced a -97% drawdown in the original model), while capturing maximum bull runs and smoothing intermediate pullbacks.",
+            mechanism: "Evaluates unleveraged QQQ against its 50-day and 200-day SMAs. Above both: 100% TQQQ (3x). Above 200 but below 50: 100% QLD (2x). Below 200 but above 50: 100% QQQ (1x). Below both: 100% SPAXX (Cash earning 4.5% yield).",
+            rules: [
+                { cond: "Price > 50 SMA AND Price > 200 SMA (Strong Bull)", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
+                { cond: "Price < 50 SMA BUT Price > 200 SMA (Bull Pullback)", alloc: { "TQQQ": 0, "QLD": 100, "QQQ": 0, "CASH": 0 } },
+                { cond: "Price > 50 SMA BUT Price < 200 SMA (Early Recovery)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 100, "CASH": 0 } },
+                { cond: "Price < 50 SMA AND Price < 200 SMA (Full Bear Defense)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
+            ],
+            pros: [
+                "Sidesteps catastrophic 50%-80% drawdowns in structural bear markets by sweeping 100% into SPAXX.",
+                "Smooth stepped transitions (3x → 2x → 1x → Cash) eliminate emotional panic and sudden whipsaw shock.",
+                "Low turnover (~4 to 8 rebalances/year), ideal for Roth IRAs and standard Fidelity accounts."
+            ],
+            cons: [
+                "Requires discipline to transition between leverage tiers based strictly on daily close signals.",
+                "Subject to occasional whipsaws along the SMA lines during choppy sideways consolidations without buffers."
+            ]
+        },
+        "4-Tier Graduated Leverage (1% Buffer)": {
+            tagline: "Anti-Whipsaw 4-Tier Ladder with 1.0% Hysteresis Bands",
+            style: "Regime-Switching Trend Following",
+            complexity: "Moderate-Advanced",
+            indicators: ["SMA 50 (QQQ)", "SMA 200 (QQQ)", "1.0% Hysteresis Buffer", "SPAXX Money Market Sweep"],
+            philosophy: "Builds upon the 4-Tier Graduated Leverage Architecture by adding an anti-whipsaw guardrail: requiring price to clear each moving average line by at least 1.0% before initiating a rebalance. This filters out choppy false breakouts while maintaining elite capital preservation in true bear markets.",
+            mechanism: "Applies a ±1% hysteresis buffer around both the 50-day and 200-day SMAs on QQQ. Holds current regime state until price firmly clears beyond the buffer band, then transitions along the stepped 3x → 2x → 1x → Cash ladder.",
+            rules: [
+                { cond: "Cleared Above 50 & 200 SMA by >1% (Strong Bull)", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
+                { cond: "Cleared Below 50 SMA by >1% & Stays Above 200 SMA (Bull Pullback)", alloc: { "TQQQ": 0, "QLD": 100, "QQQ": 0, "CASH": 0 } },
+                { cond: "Cleared Above 50 SMA by >1% & Stays Below 200 SMA (Early Recovery)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 100, "CASH": 0 } },
+                { cond: "Cleared Below 50 & 200 SMA by >1% (Full Bear Defense)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
+            ],
+            pros: [
+                "Drastically cuts down false whipsaw rebalances and trading turnover during sideways consolidation.",
+                "Smooth de-risking ladder keeps capital compounding safely in SPAXX during major bear crashes.",
+                "Elite risk-adjusted performance with highly stable regime persistence."
+            ],
+            cons: [
+                "Slightly delays entry/exit by 1.0% price distance relative to the unbuffered model.",
+                "Stateful execution requires tracking prior regime position relative to each SMA."
+            ]
+        },
         "Composer SMA: 100% TQQQ / CASH": {
+
             tagline: "Stateless 3x Leverage / CASH Switch",
             style: "Trend Following",
             complexity: "Simple",

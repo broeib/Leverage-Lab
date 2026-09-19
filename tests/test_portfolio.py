@@ -81,6 +81,38 @@ def test_portfolio_drawdown():
     assert portfolio.get_value(crash_prices) == 800.0
     assert portfolio.get_drawdown_pct(crash_prices) == pytest.approx(20.0)
     assert portfolio.get_drawdown_pct_per_dollar(crash_prices) == pytest.approx(20.0)
+    assert portfolio.get_drawdown_pct_twr(crash_prices) == pytest.approx(20.0)
+
+def test_portfolio_twr_ignores_cash_dilution():
+    """Verify that adding cash to a profitable portfolio doesn't cause a TWR drawdown."""
+    portfolio = Portfolio()
+    
+    # Week 1: $1000 invested at $100/share = 10 shares
+    prices1 = {"QQQ": 100.0, "QLD": 50.0, "TQQQ": 25.0, "CASH": 1.0}
+    target_alloc = {"QQQ": 1.0, "QLD": 0.0, "TQQQ": 0.0, "CASH": 0.0}
+    portfolio.rebalance(target_alloc, prices1, contribution=1000.0)
+    
+    # Week 2: QQQ doubles to $200. Value = $2000.
+    prices2 = {"QQQ": 200.0, "QLD": 50.0, "TQQQ": 25.0, "CASH": 1.0}
+    # We add another $1000.
+    portfolio.rebalance(target_alloc, prices2, contribution=1000.0)
+    
+    # New invested = $2000. New value = $2000 + $1000 = $3000.
+    # After rebalance, VPD is 1.5, which becomes the new peak_vpd.
+    assert portfolio.get_drawdown_pct_per_dollar(prices2) == pytest.approx(0.0)
+    
+    # Week 3: QQQ stays at 200.0.
+    # Before rebalance, value is $3000, invested $2000. VPD = 1.5.
+    # Rebalance adds $1000 cash.
+    portfolio.rebalance(target_alloc, prices2, contribution=1000.0)
+    
+    # New invested = $3000. New value = $3000 + $1000 = $4000.
+    # Current VPD is 4000/3000 = 1.333. Peak is 1.5.
+    # This creates a phantom per-dollar drawdown of 11.1%.
+    assert portfolio.get_drawdown_pct_per_dollar(prices2) == pytest.approx((1.5 - (4000/3000)) / 1.5 * 100)
+    
+    # However, TWR drawdown should be 0, as the market only went up and stayed flat!
+    assert portfolio.get_drawdown_pct_twr(prices2) == pytest.approx(0.0)
 
 
 def test_apply_cash_yield():

@@ -8,6 +8,11 @@ from strategies.drawdown_dynamic import DrawdownDynamicStrategy
 from strategies.composite_signal import CompositeSignalStrategy
 from strategies.tactical_cash import TacticalCashStrategy
 from strategies.enhanced_sma import EnhancedSMATrendStrategy
+from strategies.graduated_leverage import (
+    GraduatedLeverageStrategy,
+    BufferedGraduatedLeverageStrategy,
+    Graduated4TierLeverageStrategy,
+)
 from strategies.composer_sma import (
     ComposerSMATQQQCashStrategy,
     ComposerSMAQLDCashStrategy,
@@ -31,11 +36,14 @@ ALL_STRATEGIES = [
     CompositeSignalStrategy,
     TacticalCashStrategy,
     EnhancedSMATrendStrategy,
+    GraduatedLeverageStrategy,
+    BufferedGraduatedLeverageStrategy,
     ComposerSMATQQQCashStrategy,
     ComposerSMAQLDCashStrategy,
     ComposerSMAQQQCashStrategy,
     ComposerSMATechAITiltStrategy,
 ]
+
 
 ALL_BENCHMARKS = [
     BuyHoldQQQ,

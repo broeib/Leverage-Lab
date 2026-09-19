@@ -52,13 +52,13 @@ def compute_performance_metrics(history_df: pd.DataFrame) -> Dict[str, Any]:
     end_date = history_df.index[-1]
     years: float = (end_date - start_date).days / 365.25
 
-    # CAGR (growth on per-dollar basis for DCA consistency)
+    # CAGR (Time-Weighted Return basis)
     cagr: float = 0.0
-    if years > 0 and total_invested > 0:
-        vpd_start = history_df["value_per_dollar"].iloc[0]
-        vpd_end = history_df["value_per_dollar"].iloc[-1]
-        if vpd_start > 0:
-            cagr = ((vpd_end / vpd_start) ** (1 / years) - 1) * 100
+    if years > 0 and "twr_unit" in history_df.columns:
+        twr_start = history_df["twr_unit"].iloc[0]
+        twr_end = history_df["twr_unit"].iloc[-1]
+        if twr_start > 0:
+            cagr = ((twr_end / twr_start) ** (1 / years) - 1) * 100
         cagr = min(cagr, 999.9)  # Cap CAGR for display sanity
 
     # Weekly returns for risk metrics
@@ -72,9 +72,11 @@ def compute_performance_metrics(history_df: pd.DataFrame) -> Dict[str, Any]:
     if len(weekly_returns) > 1:
         volatility = float(weekly_returns.std() * np.sqrt(WEEKS_PER_YEAR) * 100)
 
-    # Max drawdown (on per-dollar basis to avoid DCA masking effect)
+    # Max drawdown (Time-Weighted Return basis)
     max_drawdown: float = 0.0
-    if "drawdown_pct_per_dollar" in history_df.columns:
+    if "drawdown_pct_twr" in history_df.columns:
+        max_drawdown = float(history_df["drawdown_pct_twr"].max())
+    elif "drawdown_pct_per_dollar" in history_df.columns:
         max_drawdown = float(history_df["drawdown_pct_per_dollar"].max())
 
     # Sharpe ratio (annualized, excess return over weekly risk-free rate)
@@ -82,7 +84,7 @@ def compute_performance_metrics(history_df: pd.DataFrame) -> Dict[str, Any]:
     risk_free_weekly = RISK_FREE_RATE_ANNUAL / WEEKS_PER_YEAR
     if len(weekly_returns) > 1 and weekly_returns.std() > 0:
         excess_returns = weekly_returns - risk_free_weekly
-        sharpe = float((excess_returns.mean() / excess_returns.std()) * np.sqrt(WEEKS_PER_YEAR))
+        sharpe = float((excess_returns.mean() / weekly_returns.std()) * np.sqrt(WEEKS_PER_YEAR))
 
     # Sortino ratio (downside deviation basis)
     sortino: float = 0.0

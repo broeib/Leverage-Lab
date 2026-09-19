@@ -22,6 +22,9 @@ class PortfolioSnapshot:
     value_per_dollar: float           # total_value / total_invested
     peak_value_per_dollar: float      # peak of value_per_dollar
     drawdown_pct_per_dollar: float    # drawdown on per-dollar basis
+    twr_unit: float                   # Time-weighted return unit value
+    peak_twr_unit: float              # Peak TWR unit value
+    drawdown_pct_twr: float           # Drawdown based on TWR
 
 
 class Portfolio:
@@ -40,6 +43,9 @@ class Portfolio:
         self.total_invested: float = 0.0
         self.peak_value: float = 0.0
         self.peak_value_per_dollar: float = 0.0
+        self.twr_unit: float = 1.0
+        self.peak_twr_unit: float = 1.0
+        self.last_value_post_rebalance: float = 0.0
         self.history: List[PortfolioSnapshot] = []
 
     def get_value(self, prices: Dict[str, float]) -> float:
@@ -124,6 +130,28 @@ class Portfolio:
             return 0.0
         return max(0.0, (self.peak_value_per_dollar - vpd) / self.peak_value_per_dollar * 100.0)
 
+    def get_drawdown_pct_twr(self, prices: Dict[str, float]) -> float:
+        """Calculate drawdown on a time-weighted return (TWR) basis.
+
+        This completely isolates market performance from cash flow dilution.
+        
+        Args:
+            prices: Dictionary of current asset prices.
+
+        Returns:
+            float: Percentage drawdown on a time-weighted basis.
+        """
+        current_twr = self.twr_unit
+        if self.last_value_post_rebalance > 0:
+            current_market_value = self.get_value(prices)
+            r_t = (current_market_value - self.last_value_post_rebalance) / self.last_value_post_rebalance
+            current_twr *= (1.0 + r_t)
+
+        peak_twr = max(self.peak_twr_unit, current_twr)
+        if peak_twr <= 0:
+            return 0.0
+        return max(0.0, (peak_twr - current_twr) / peak_twr * 100.0)
+
     def get_state(self, prices: Dict[str, float]) -> Dict[str, float]:
         """Get current portfolio state metrics for strategy consumption.
 
@@ -137,7 +165,7 @@ class Portfolio:
         return {
             "total_value": total,
             "peak_value": self.peak_value,
-            "drawdown_pct": self.get_drawdown_pct_per_dollar(prices),
+            "drawdown_pct": self.get_drawdown_pct_twr(prices),
             "total_invested": self.total_invested,
             "value_per_dollar": self.get_value_per_dollar(prices),
             "peak_value_per_dollar": self.peak_value_per_dollar,
@@ -162,6 +190,14 @@ class Portfolio:
             prices: Current asset prices {ticker: price}.
             contribution: Cash contribution to add before rebalancing (e.g. $5000 weekly).
         """
+        # Calculate market growth before adding contribution
+        if self.last_value_post_rebalance > 0:
+            market_value_before_contrib = self.get_value(prices)
+            r_t = (market_value_before_contrib - self.last_value_post_rebalance) / self.last_value_post_rebalance
+            self.twr_unit *= (1.0 + r_t)
+            if self.twr_unit > self.peak_twr_unit:
+                self.peak_twr_unit = self.twr_unit
+
         # Add contribution to total invested
         self.total_invested += contribution
 
@@ -189,6 +225,9 @@ class Portfolio:
         if vpd > self.peak_value_per_dollar:
             self.peak_value_per_dollar = vpd
 
+        # Save the new value post rebalance and contribution
+        self.last_value_post_rebalance = self.get_value(prices)
+
     def record_snapshot(
         self, 
         date: pd.Timestamp, 
@@ -210,6 +249,7 @@ class Portfolio:
         alloc = self.get_allocation_pct(prices)
         vpd = self.get_value_per_dollar(prices)
         drawdown_per_dollar = self.get_drawdown_pct_per_dollar(prices)
+        drawdown_twr = self.get_drawdown_pct_twr(prices)
 
         snapshot = PortfolioSnapshot(
             date=date,
@@ -221,10 +261,13 @@ class Portfolio:
             allocation_pct=alloc,
             weekly_contribution=contribution,
             peak_value=self.peak_value,
-            drawdown_pct=drawdown_per_dollar,
+            drawdown_pct=drawdown_twr,
             value_per_dollar=vpd,
             peak_value_per_dollar=self.peak_value_per_dollar,
             drawdown_pct_per_dollar=drawdown_per_dollar,
+            twr_unit=self.twr_unit,
+            peak_twr_unit=self.peak_twr_unit,
+            drawdown_pct_twr=drawdown_twr,
         )
         self.history.append(snapshot)
         return snapshot
@@ -249,6 +292,9 @@ class Portfolio:
                 "value_per_dollar": snap.value_per_dollar,
                 "peak_value_per_dollar": snap.peak_value_per_dollar,
                 "drawdown_pct_per_dollar": snap.drawdown_pct_per_dollar,
+                "twr_unit": snap.twr_unit,
+                "peak_twr_unit": snap.peak_twr_unit,
+                "drawdown_pct_twr": snap.drawdown_pct_twr,
                 "weekly_contribution": snap.weekly_contribution,
                 "QQQ_value": snap.values.get("QQQ", 0.0),
                 "QLD_value": snap.values.get("QLD", 0.0),

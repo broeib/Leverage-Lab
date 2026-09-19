@@ -52,7 +52,7 @@ class BaseStrategy(ABC):
         """Validate and normalize allocation to sum to 1.0.
 
         Args:
-            allocation: Raw allocation dict.
+            allocation: Raw allocation dict. Supports 'QQQ', 'QLD', 'TQQQ', 'CASH', and 'SPAXX' (aliased to CASH).
 
         Returns:
             Normalized allocation dict.
@@ -60,16 +60,23 @@ class BaseStrategy(ABC):
         Raises:
             ValueError: If allocation contains invalid tickers or negative values.
         """
+        # Normalize aliases (SPAXX -> CASH)
+        normalized_raw: Dict[str, float] = {}
+        for ticker, weight in allocation.items():
+            canonical_ticker = "CASH" if ticker == "SPAXX" else ticker
+            normalized_raw[canonical_ticker] = normalized_raw.get(canonical_ticker, 0.0) + weight
+
         valid_tickers = {"QQQ", "QLD", "TQQQ", "CASH"}
-        for ticker in allocation:
+        for ticker in normalized_raw:
             if ticker not in valid_tickers:
                 raise ValueError(f"Invalid ticker: {ticker}")
-            if allocation[ticker] < 0:
-                raise ValueError(f"Negative allocation for {ticker}: {allocation[ticker]}")
+            if normalized_raw[ticker] < 0:
+                raise ValueError(f"Negative allocation for {ticker}: {normalized_raw[ticker]}")
 
-        total = sum(allocation.values())
+        total = sum(normalized_raw.values())
         if total == 0:
             raise ValueError("Total allocation is zero")
 
         # Normalize
-        return {k: v / total for k, v in allocation.items()}
+        return {k: v / total for k, v in normalized_raw.items()}
+
