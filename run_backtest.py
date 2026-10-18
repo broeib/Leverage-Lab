@@ -24,9 +24,10 @@ from indicators.rsi import add_rsi_column
 from indicators.bollinger import add_bollinger_columns
 from indicators.macd import add_macd_columns
 from indicators.composite import add_composite_column
+from indicators.ema_channel import add_ema_channel_columns, add_risk_overlay_columns
 from engine.backtester import Backtester, generate_summary_table, BacktestResult
 from strategies import ALL_STRATEGIES, ALL_BENCHMARKS
-from tools.config_loader import get_universe_params
+from tools.config_loader import get_universe_params, get_strategy_params
 from engine.logger import logger
 
 
@@ -64,6 +65,19 @@ def prepare_indicator_data(close_prices: pd.DataFrame, vix_data: pd.DataFrame) -
     vix_aligned = vix_data["VIX_Close"].reindex(df.index).ffill()
     df = add_composite_column(df, vix_aligned)
     logger.info("  ✓ Composite Score")
+
+    # EMA Channel (EMA of High / EMA of Close) + v2 risk-overlay inputs, from config
+    ema_cfg = get_strategy_params("ema_channel")
+    ema_length = int(ema_cfg.get("length", 200))
+    df = add_ema_channel_columns(df, high_col="QQQ_High", close_col="QQQ", length=ema_length)
+    df = add_risk_overlay_columns(
+        df,
+        close_col="QQQ",
+        fast_ema=int(ema_cfg.get("fast_ema", 100)),
+        high_window=int(ema_cfg.get("high_window", 252)),
+        vol_window=int(ema_cfg.get("vol_window", 20)),
+    )
+    logger.info(f"  ✓ EMA Channel ({ema_length}) + risk overlay inputs")
 
     # Find first date where all indicators are available
     first_valid = df.dropna().index[0] if not df.dropna().empty else df.index[0]

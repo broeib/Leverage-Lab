@@ -132,3 +132,60 @@ def test_buffered_graduated_leverage_anti_whipsaw():
     alloc_reclaim = strat.get_allocation(None, {"QQQ": 486.0, "SMA_50": 480.0, "SMA_200": 450.0}, {})
     assert alloc_reclaim["TQQQ"] == 1.0
 
+
+def test_ema_channel_strategies():
+    """Verify both EMA channel variants map the three channel states correctly."""
+    from strategies.ema_channel import (
+        EMAChannelAggressiveStrategy,
+        EMAChannelConservativeStrategy,
+    )
+
+    aggressive = EMAChannelAggressiveStrategy()
+    conservative = EMAChannelConservativeStrategy()
+
+    green = {"QQQ": 110.0, "EMA_TOP": 105.0, "EMA_BOT": 100.0}
+    gray = {"QQQ": 102.0, "EMA_TOP": 105.0, "EMA_BOT": 100.0}
+    red = {"QQQ": 95.0, "EMA_TOP": 105.0, "EMA_BOT": 100.0}
+    warmup = {"QQQ": 95.0, "EMA_TOP": None, "EMA_BOT": None}
+
+    for strat in (aggressive, conservative):
+        assert strat.get_allocation(None, green, {})["TQQQ"] == 1.0
+        assert strat.get_allocation(None, red, {})["CASH"] == 1.0
+        assert strat.get_allocation(None, warmup, {})["CASH"] == 1.0
+
+    assert aggressive.get_allocation(None, gray, {})["QLD"] == 1.0
+    assert conservative.get_allocation(None, gray, {})["QQQ"] == 1.0
+
+
+def test_ema_channel_v2_overlay():
+    """Verify v2 uses buffered channel lines and caps leverage at 1x when any risk trigger fires."""
+    from strategies.ema_channel import EMAChannelV2Strategy
+
+    s = EMAChannelV2Strategy()
+    calm = {"ROLL_HIGH": 100.0, "EMA_FAST": 90.0, "RVOL": 15.0}
+
+    # Clear green with no trigger -> 3x
+    md = {"QQQ": 110.0, "EMA_TOP": 105.0, "EMA_BOT": 100.0, **calm}
+    assert s.get_allocation(None, md, {})["TQQQ"] == 1.0
+
+    # Just above the top line but inside the +1% buffer -> still gray -> 2x
+    md = {"QQQ": 105.5, "EMA_TOP": 105.0, "EMA_BOT": 100.0, **calm}
+    assert s.get_allocation(None, md, {})["QLD"] == 1.0
+
+    # Just below the bottom line but inside the -1% buffer -> still gray -> 2x
+    md = {"QQQ": 99.5, "EMA_TOP": 105.0, "EMA_BOT": 100.0, **calm}
+    assert s.get_allocation(None, md, {})["QLD"] == 1.0
+
+    # Clear red -> cash regardless of overlay
+    md = {"QQQ": 95.0, "EMA_TOP": 105.0, "EMA_BOT": 100.0, **calm}
+    assert s.get_allocation(None, md, {})["CASH"] == 1.0
+
+    green = {"QQQ": 110.0, "EMA_TOP": 105.0, "EMA_BOT": 100.0}
+    # Each trigger alone caps green at 1x
+    assert s.get_allocation(None, {**green, **calm, "ROLL_HIGH": 140.0}, {})["QQQ"] == 1.0   # >15% off high
+    assert s.get_allocation(None, {**green, **calm, "EMA_FAST": 115.0}, {})["QQQ"] == 1.0   # below fast EMA
+    assert s.get_allocation(None, {**green, **calm, "RVOL": 45.0}, {})["QQQ"] == 1.0        # vol gate
+
+    # Missing overlay inputs (warm-up) -> overlay ignored, channel rules apply
+    md = {"QQQ": 110.0, "EMA_TOP": 105.0, "EMA_BOT": 100.0, "ROLL_HIGH": None, "EMA_FAST": None, "RVOL": None}
+    assert s.get_allocation(None, md, {})["TQQQ"] == 1.0

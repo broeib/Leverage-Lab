@@ -86,3 +86,51 @@ def test_compute_composite_score():
     
     assert len(score) == 5
     assert all(0 <= s <= 100 for s in score)
+
+
+def test_compute_ema_channel():
+    """Verify EMA warm-up masking, constant-series behaviour, and channel ordering."""
+    from indicators.ema_channel import compute_ema, add_ema_channel_columns
+
+    # EMA of a constant series is that constant once warmed up
+    const = pd.Series([5.0] * 10)
+    ema = compute_ema(const, length=3)
+    assert pd.isna(ema.iloc[0]) and pd.isna(ema.iloc[1])
+    assert np.allclose(ema.iloc[2:], 5.0)
+
+    # Matches Pine's recursive formula with alpha = 2 / (length + 1)
+    prices = pd.Series([10.0, 11.0, 12.0, 13.0])
+    ema2 = compute_ema(prices, length=2)
+    alpha = 2.0 / 3.0
+    expected = 10.0
+    for p in prices.iloc[1:]:
+        expected = alpha * p + (1 - alpha) * expected
+    assert np.isclose(ema2.iloc[-1], expected)
+
+    # Channel: top (EMA of High) >= bottom (EMA of Close) when High >= Close
+    df = pd.DataFrame({
+        "QQQ": np.linspace(100, 120, 30),
+        "QQQ_High": np.linspace(100, 120, 30) * 1.01,
+    })
+    out = add_ema_channel_columns(df, length=5)
+    assert {"EMA_TOP", "EMA_BOT"} <= set(out.columns)
+    warm = out.dropna()
+    assert len(warm) == 30 - 4
+    assert (warm["EMA_TOP"] >= warm["EMA_BOT"]).all()
+
+
+def test_add_risk_overlay_columns():
+    """Verify overlay inputs: rolling high, fast EMA, and realised vol behave sensibly."""
+    from indicators.ema_channel import add_risk_overlay_columns
+
+    rng = np.random.default_rng(0)
+    prices = 100 * np.cumprod(1 + rng.normal(0, 0.01, 400))
+    df = pd.DataFrame({"QQQ": prices})
+    out = add_risk_overlay_columns(df, close_col="QQQ", fast_ema=10, high_window=50, vol_window=20)
+
+    assert {"EMA_FAST", "ROLL_HIGH", "RVOL"} <= set(out.columns)
+    assert pd.isna(out["ROLL_HIGH"].iloc[48]) and not pd.isna(out["ROLL_HIGH"].iloc[49])
+    warm = out.dropna()
+    assert (warm["ROLL_HIGH"] >= warm["QQQ"]).all()
+    # ~1% daily noise -> roughly 16% annualised; allow a wide band
+    assert 5 < warm["RVOL"].mean() < 40

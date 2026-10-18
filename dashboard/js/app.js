@@ -406,6 +406,8 @@
             titleEl.textContent = 'Leverage Lab';
         } else if (key === 'soxx') {
             titleEl.textContent = 'Leverage Lab: Semiconductors';
+        } else if (key === 'spy') {
+            titleEl.textContent = 'Leverage Lab: S&P 500';
         } else {
             titleEl.textContent = 'Leverage Lab';
         }
@@ -1888,6 +1890,52 @@
                 "Stateful execution requires tracking prior regime position relative to each SMA."
             ]
         },
+        "EMA Channel: 3x / 2x / Cash": {
+            tagline: "PlayBit EMA Channel — Leverage Ladder",
+            style: "Trend Following",
+            complexity: "Simple",
+            indicators: ["EMA 200 of daily High (channel top)", "EMA 200 of daily Close (channel bottom)"],
+            philosophy: "Ported from the TradingView 'PlayBit EMA' indicator. Two 200-day EMAs — one on highs, one on closes — form a channel whose colour describes the trend: green above, gray inside, red below. Leverage is stepped down as price sinks through the channel.",
+            mechanism: "Stateless: each week the close of the 1x index is compared to the channel. Above the High-EMA it holds 100% 3x; inside the channel it drops to 100% 2x; below the Close-EMA it sweeps everything into yield-bearing CASH.",
+            rules: [
+                { cond: "Close > EMA(High) — green channel", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
+                { cond: "EMA(Close) <= Close <= EMA(High) — gray channel", alloc: { "TQQQ": 0, "QLD": 100, "QQQ": 0, "CASH": 0 } },
+                { cond: "Close < EMA(Close) — red channel", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
+            ],
+            pros: ["The High-based top line adds a natural buffer above the usual 200-EMA, reducing whipsaws at the top of the channel.", "Keeps 2x exposure through shallow pullbacks instead of exiting entirely.", "Stateless — reproducible in Composer-style conditional blocks."],
+            cons: ["Still fully exposed to a sharp crash that starts from above the channel.", "The gray zone is narrow, so it can flip between 3x and 2x frequently in choppy markets."]
+        },
+        "EMA Channel v2: Risk-Managed": {
+            tagline: "PlayBit EMA Channel + Risk Overlay",
+            style: "Trend Following + Risk Control",
+            complexity: "Intermediate",
+            indicators: ["EMA 200 of High / Close (channel, ±1% buffers)", "EMA 100 of Close", "252-day rolling high", "20-day realised volatility"],
+            philosophy: "The 3x / 2x / Cash channel ladder was swept across ~640 parameter and overlay combinations on all three universes. The base ladder's weakness is that a slow 200-day channel exits crashes late, so v2 adds three fast risk triggers that cap exposure at 1x without changing the trend signal.",
+            mechanism: "Channel zone sets the base allocation (green → 3x, gray → 2x, red → CASH). Then, if the 1x index is more than 15% below its 52-week high, OR below its 100-day EMA, OR its 20-day realised volatility exceeds 40% annualised, leverage is capped at 1x for that week. Across universes this roughly halves max drawdown at unchanged CAGR.",
+            rules: [
+                { cond: "Close > 1.01 × EMA(High), no risk trigger", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
+                { cond: "Inside channel, no risk trigger", alloc: { "TQQQ": 0, "QLD": 100, "QQQ": 0, "CASH": 0 } },
+                { cond: "Green or gray, but any trigger fires (>15% off high, < EMA 100, vol > 40%)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 100, "CASH": 0 } },
+                { cond: "Close < 0.99 × EMA(Close) — red channel", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
+            ],
+            pros: ["Max drawdown roughly halved vs. the base ladder in every universe tested (e.g. NASDAQ-100 80% → 49%).", "Higher Sharpe and Calmar than the base ladder in all three universes and in 8 of 9 sub-periods.", "Still stateless — every rule is a pure function of today's indicators."],
+            cons: ["More trades (~300 vs ~200 rebalances over 40 years).", "Parameters were tuned on the same history they are evaluated on; expect some degradation live.", "The vol gate briefly steps out of strong rallies that arrive with high volatility (e.g. 2020 recovery)."]
+        },
+        "EMA Channel: 3x / 1x / Cash": {
+            tagline: "PlayBit EMA Channel — Early De-risk",
+            style: "Trend Following",
+            complexity: "Simple",
+            indicators: ["EMA 200 of daily High (channel top)", "EMA 200 of daily Close (channel bottom)"],
+            philosophy: "Same PlayBit EMA channel as the leverage-ladder variant, but treats the gray zone as a warning rather than a pause: as soon as price falls back inside the channel all leverage is removed.",
+            mechanism: "Stateless: above the High-EMA it holds 100% 3x; inside the channel it drops straight to unleveraged 1x; below the Close-EMA it sweeps everything into yield-bearing CASH.",
+            rules: [
+                { cond: "Close > EMA(High) — green channel", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
+                { cond: "EMA(Close) <= Close <= EMA(High) — gray channel", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 100, "CASH": 0 } },
+                { cond: "Close < EMA(Close) — red channel", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
+            ],
+            pros: ["Removes leverage decay exposure as soon as the trend pauses.", "Lower drawdowns than the 2x variant in prolonged consolidations.", "Stateless — reproducible in Composer-style conditional blocks."],
+            cons: ["Gives up 2x compounding during shallow pullbacks that resolve upward.", "More frequent large allocation swings (3x → 1x) than the ladder variant."]
+        },
         "Composer SMA: 100% TQQQ / CASH": {
 
             tagline: "Stateless 3x Leverage / CASH Switch",
@@ -2010,14 +2058,14 @@
         if (strategyName.includes("Equal Weight")) return "Equal Weight (33/33/33)";
         
         // Map dynamic Composer SMA strategy names to their canonical QQQ/QLD/TQQQ keys for unified details/performance lookup
-        if (strategyName.includes("Composer SMA: 100% TQQQ") || strategyName.includes("Composer SMA: 100% SOXL")) {
-            return "Composer SMA: 100% TQQQ / CASH";
-        }
-        if (strategyName.includes("Composer SMA: 100% QLD") || strategyName.includes("Composer SMA: 100% USD")) {
-            return "Composer SMA: 100% QLD / CASH";
-        }
-        if (strategyName.includes("Composer SMA: 100% QQQ") || strategyName.includes("Composer SMA: 100% SOXX")) {
-            return "Composer SMA: 100% QQQ / CASH";
+        if (strategyName.startsWith("Composer SMA: 100% ") && UNIVERSE_META) {
+            const t = UNIVERSE_META.tickers;
+            const roleMap = { [t['3x']]: "TQQQ", [t['2x']]: "QLD", [t['1x']]: "QQQ" };
+            for (const [real, generic] of Object.entries(roleMap)) {
+                if (strategyName.includes(`Composer SMA: 100% ${real} `)) {
+                    return `Composer SMA: 100% ${generic} / CASH`;
+                }
+            }
         }
         return strategyName;
     }
