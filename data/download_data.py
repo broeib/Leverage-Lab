@@ -50,6 +50,18 @@ UNIVERSES = {
             "3x": {"leverage": 3.0, "drag": 0.011},
         },
     },
+    "spy": {
+        "name": "S&P 500 (SPY/SSO/UPRO)",
+        "tickers": {"1x": "SPY", "2x": "SSO", "3x": "UPRO"},
+        "index": "%5EGSPC",          # ^GSPC
+        "start_date": "1985-10-01",
+        "cache_file": os.path.join(DATA_DIR, "etf_prices_spy.csv"),
+        "leverage_params": {
+            "1x": {"leverage": 1.0, "drag": 0.001},
+            "2x": {"leverage": 2.0, "drag": 0.0075},
+            "3x": {"leverage": 3.0, "drag": 0.015},
+        },
+    },
 }
 
 # Backwards-compatible aliases
@@ -212,8 +224,18 @@ def _backfill_ticker(ticker_data, index_data, leverage, drag):
         synth_df = pd.DataFrame(index=synth_dates)
         synth_df["Close"] = synth_close.loc[synth_dates]
         synth_df["Open"] = synth_close.loc[synth_dates]
-        synth_df["High"] = synth_close.loc[synth_dates]
-        synth_df["Low"] = synth_close.loc[synth_dates]
+        # Scale synthetic High/Low by the index's own intraday range so that
+        # High-based indicators (e.g. the EMA channel) keep a realistic width
+        # during the backfilled period instead of collapsing onto Close.
+        if "High" in index_data.columns and "Low" in index_data.columns:
+            # Intraday excursion scales with leverage: a 1% index range is ~3% for a 3x fund.
+            high_ratio = (1.0 + (index_data["High"] / idx_close - 1.0) * leverage).reindex(synth_dates).fillna(1.0).clip(lower=1.0)
+            low_ratio = (1.0 + (index_data["Low"] / idx_close - 1.0) * leverage).reindex(synth_dates).fillna(1.0).clip(lower=0.01, upper=1.0)
+        else:
+            high_ratio = pd.Series(1.0, index=synth_dates)
+            low_ratio = pd.Series(1.0, index=synth_dates)
+        synth_df["High"] = synth_df["Close"] * high_ratio
+        synth_df["Low"] = synth_df["Close"] * low_ratio
         synth_df["Volume"] = 0.0
 
         actual_df = df.loc[df.index >= first_actual_date]
@@ -359,9 +381,17 @@ def download_vix_data(force_refresh=False, start_date="1985-10-01"):
 
 
 def get_close_prices(etf_data):
-    """Extract close prices from the multi-level DataFrame."""
+    """Extract close prices from the multi-level DataFrame.
+
+    Also carries the 1x ticker's daily High as ``QQQ_High`` so that
+    High-based indicators (e.g. the EMA channel) can be computed downstream.
+    """
     close = etf_data["Close"].copy()
     close = close.dropna()
+    if "High" in etf_data.columns.get_level_values(0) and "QQQ" in etf_data["High"].columns:
+        high = etf_data["High"]["QQQ"].reindex(close.index)
+        # Fall back to Close where High is missing so the column never has gaps.
+        close["QQQ_High"] = high.fillna(close["QQQ"])
     return close
 
 

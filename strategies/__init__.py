@@ -19,6 +19,11 @@ from strategies.composer_sma import (
     ComposerSMAQQQCashStrategy,
     ComposerSMATechAITiltStrategy,
 )
+from strategies.ema_channel import (
+    EMAChannelAggressiveStrategy,
+    EMAChannelConservativeStrategy,
+    EMAChannelV2Strategy,
+)
 from strategies.benchmarks import (
     BuyHoldQQQ,
     BuyHoldQLD,
@@ -42,6 +47,9 @@ ALL_STRATEGIES = [
     ComposerSMAQLDCashStrategy,
     ComposerSMAQQQCashStrategy,
     ComposerSMATechAITiltStrategy,
+    EMAChannelAggressiveStrategy,
+    EMAChannelConservativeStrategy,
+    EMAChannelV2Strategy,
 ]
 
 
