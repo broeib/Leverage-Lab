@@ -5,9 +5,10 @@
   "strategies": {
     "sma_trend": {
       "default_regime": {
-        "strong": {"QQQ": 0.0, "QLD": 0.0, "TQQQ": 1.0},
-        "mild": {"QQQ": 0.0, "QLD": 1.0, "TQQQ": 0.0},
-        "weak": {"QQQ": 1.0, "QLD": 0.0, "TQQQ": 0.0}
+        "strong": {"QQQ": 0.0, "QLD": 0.0, "TQQQ": 1.0, "CASH": 0.0},
+        "mild": {"QQQ": 0.0, "QLD": 1.0, "TQQQ": 0.0, "CASH": 0.0},
+        "weak": {"QQQ": 1.0, "QLD": 0.0, "TQQQ": 0.0, "CASH": 0.0},
+        "bear": {"QQQ": 0.0, "QLD": 0.0, "TQQQ": 0.0, "CASH": 1.0}
       }
     },
     "rsi_momentum": {

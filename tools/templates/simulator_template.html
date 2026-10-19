@@ -851,7 +851,7 @@
                 <div class="comp-card-title">💰 Yield safe haven</div>
                 <div class="comp-rule-block">
                     <span class="comp-rule-label">Standard SMA Trend</span>
-                    <span class="comp-rule-val">Unleveraged QQQ. During bear markets, retreats to 1x QQQ, remaining fully exposed to major stock market declines (e.g. -50% GFC drawdown).</span>
+                    <span class="comp-rule-val">Two-step defense. Below the 200 SMA it retreats to 1x QQQ, and only moves to CASH after a death cross (50 SMA below 200 SMA). No yield modeled in the simulator, and the lagging cross leaves it exposed to the first leg of a crash.</span>
                 </div>
                 <div class="comp-rule-block" style="margin-top: 0.5rem;">
                     <span class="comp-rule-label">Enhanced Quant SMA</span>
@@ -971,10 +971,17 @@
                     </div>
                 </div>
                 <div class="legend-item">
+                    <div class="legend-icon">🔵</div>
+                    <div>
+                        <div class="legend-title">QQQ (1x Defensive)</div>
+                        <div class="legend-desc">If prices dip below the 200-day average while the 50-day average is still above it, we exit all leverage and hold regular QQQ.</div>
+                    </div>
+                </div>
+                <div class="legend-item">
                     <div class="legend-icon">🔴</div>
                     <div>
-                        <div class="legend-title">QQQ (1x Safe)</div>
-                        <div class="legend-desc">If prices plunge below the 200-day average, we exit all leverage and hold regular QQQ to protect our nest egg from devastating corrections.</div>
+                        <div class="legend-title">CASH (Safest)</div>
+                        <div class="legend-desc">Once the 50-day average also crosses below the 200-day average (death cross) with price below the 200-day, we move fully to CASH to protect our nest egg from devastating bear markets.</div>
                     </div>
                 </div>`;
             } else {
@@ -1050,11 +1057,14 @@
             if (currentStrategy === 'standard') {
                 let isAbove200 = p > s200;
                 let isAbove50 = p > s50;
-                let alloc = isAbove50 && isAbove200 ? 'TQQQ' : (isAbove200 ? 'QLD' : 'QQQ');
-                let allocSubText = alloc === 'TQQQ' ? '3x Leveraged Speed' : (alloc === 'QLD' ? '2x Leveraged Speed' : '1x Defensive Safe');
+                let isGoldenCross = s50 > s200;
+                let alloc = isAbove50 && isAbove200 ? 'TQQQ' : (isAbove200 ? 'QLD' : (isGoldenCross ? 'QQQ' : 'CASH'));
+                let allocSubText = alloc === 'TQQQ' ? '3x Leveraged Speed' : (alloc === 'QLD' ? '2x Leveraged Speed' : (alloc === 'QQQ' ? '1x Defensive' : 'Safe CASH'));
                 let reasonText = alloc === 'TQQQ' 
                     ? "🟢 Price is above both averages. Trend is strongly bullish, maximizing leverage speed in 3x TQQQ."
-                    : (alloc === 'QLD' ? "🟡 Price is below 50-day average but above 200-day average. Mild trend, holding 2x QLD." : "🔴 Price is below 200-day average. Bear trend, holding defensive 1x QQQ.");
+                    : (alloc === 'QLD' ? "🟡 Price is below 50-day average but above 200-day average. Mild trend, holding 2x QLD."
+                    : (alloc === 'QQQ' ? "🔵 Price is below 200-day average, but the 50-day average is still above the 200-day. Holding defensive 1x QQQ."
+                    : "🔴 Price is below 200-day average and the 50-day average is below the 200-day (death cross). Bear trend, holding CASH."));
                 
                 hudHtml = `
                 <div style="display: flex; flex-direction: column; gap: 0.8rem;">
@@ -1091,6 +1101,10 @@
                         <div class="hud-item ${isAbove50 ? 'status-ok' : 'status-neutral'}">
                             <span style="font-weight: 500;">⚡ Above 50 SMA (Strong Bull)</span>
                             <span style="font-weight: 700; color: ${isAbove50 ? 'var(--green)' : 'var(--yellow)'}">${isAbove50 ? '🟢 YES' : '🟡 NO'}</span>
+                        </div>
+                        <div class="hud-item ${isGoldenCross ? 'status-ok' : 'status-fail'}">
+                            <span style="font-weight: 500;">✂️ 50 SMA Above 200 SMA (No Death Cross)</span>
+                            <span style="font-weight: 700;">${isGoldenCross ? '✅ YES' : '❌ NO'}</span>
                         </div>
                     </div>
                     
@@ -1233,7 +1247,7 @@
             const colors = {
                 'TQQQ': 'rgba(16, 185, 129, 0.06)',    // Green
                 'QLD': 'rgba(245, 158, 11, 0.06)',     // Yellow
-                'QQQ': currentStrategy === 'standard' ? 'rgba(244, 63, 94, 0.06)' : 'rgba(56, 189, 248, 0.06)', // Red in Std, Sky Blue in Enh
+                'QQQ': 'rgba(56, 189, 248, 0.06)',     // Sky Blue
                 'QLD/QQQ': 'rgba(168, 85, 247, 0.06)', // Purple
                 'CASH': 'rgba(244, 63, 94, 0.06)'     // Red (Cash Sweep)
             };
@@ -1270,7 +1284,8 @@
                 const states = [
                     { key: 'TQQQ', label: '🟢 Time in TQQQ (Strong Bull)', color: 'var(--green)' },
                     { key: 'QLD', label: '🟡 Time in QLD (Mild Warning)', color: 'var(--yellow)' },
-                    { key: 'QQQ', label: '🔴 Time in QQQ (Bear Defense)', color: 'var(--red)' }
+                    { key: 'QQQ', label: '🔵 Time in QQQ (Defense)', color: 'var(--blue)' },
+                    { key: 'CASH', label: '🔴 Time in CASH (Death Cross)', color: 'var(--red)' }
                 ];
                 states.forEach(s => {
                     let count = counts[s.key] || 0;

@@ -126,8 +126,10 @@ def run_simulation():
             std_reg = 'TQQQ'
         elif p > s200:
             std_reg = 'QLD'
-        else:
+        elif s50 > s200:
             std_reg = 'QQQ'
+        else:
+            std_reg = 'CASH'
         std_regimes.append(std_reg)
         
         # B. Enhanced Quant SMA Regime driven by EnhancedSMATrendStrategy
@@ -187,7 +189,12 @@ def run_simulation():
                 else:
                     reason = "🟡 <b>Early Recovery:</b> Price climbed back above long-term (200-day) average, but remains below short-term. Move to QLD."
             elif regime == 'QQQ':
-                reason = "🔴 <b>Bear Market / Defense:</b> Price fell below long-term (200-day) average. Switch to safe 1x QQQ to avoid massive leverage losses."
+                if current_std == 'CASH':
+                    reason = "🔵 <b>Golden Cross Recovery:</b> 50-day average crossed back above the 200-day average while price is still below it. Re-enter with 1x QQQ."
+                else:
+                    reason = "🔵 <b>Defense:</b> Price fell below long-term (200-day) average, but the 50-day average is still above it. Switch to 1x QQQ to avoid massive leverage losses."
+            elif regime == 'CASH':
+                reason = "🔴 <b>Bear Market / Cash sweep:</b> Price is below the 200-day average and the 50-day average crossed below the 200-day (death cross). Exit to CASH to protect the nest egg."
                 
             std_triggers.append({
                 'Date': date.strftime('%Y-%m-%d'),
