@@ -1,6 +1,7 @@
 """Strategy 7: Composite Signal — combines SMA, RSI, and VIX into a single score."""
 
 from typing import Dict
+import numpy as np
 from strategies.base import BaseStrategy
 
 
@@ -24,7 +25,6 @@ class CompositeSignalStrategy(BaseStrategy):
     def get_allocation(self, date, market_data: dict, portfolio_state: dict) -> Dict[str, float]:
         score = market_data.get("Composite_Score")
 
-        import numpy as np
         if score is None or np.isnan(score):
             return {"QQQ": 0.34, "QLD": 0.33, "TQQQ": 0.33}
 

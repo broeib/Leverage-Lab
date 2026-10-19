@@ -189,3 +189,21 @@ def test_ema_channel_v2_overlay():
     # Missing overlay inputs (warm-up) -> overlay ignored, channel rules apply
     md = {"QQQ": 110.0, "EMA_TOP": 105.0, "EMA_BOT": 100.0, "ROLL_HIGH": None, "EMA_FAST": None, "RVOL": None}
     assert s.get_allocation(None, md, {})["TQQQ"] == 1.0
+
+
+def test_composer_tech_ai_tilt_description():
+    """Verify ComposerSMATechAITiltStrategy description reflects 2.0x leverage."""
+    from strategies.composer_sma import ComposerSMATechAITiltStrategy
+    s = ComposerSMATechAITiltStrategy()
+    assert "2.0x leverage" in s.description
+    assert "~1.7x" not in s.description
+
+
+def test_enhanced_sma_reset():
+    """Verify reset() restores prev_regime to BEAR."""
+    from strategies.enhanced_sma import EnhancedSMATrendStrategy
+    strat = EnhancedSMATrendStrategy()
+    strat.prev_regime = "BULL_STRONG"
+    strat.reset()
+    assert strat.prev_regime == "BEAR"
+

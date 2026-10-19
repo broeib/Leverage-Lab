@@ -116,12 +116,42 @@ def test_portfolio_twr_ignores_cash_dilution():
 
 
 def test_apply_cash_yield():
-    """Verify interest yield increases CASH balances weekly."""
+    """Verify interest yield increases CASH balances based on days elapsed."""
     portfolio = Portfolio()
     portfolio.shares["CASH"] = 1000.0
     
+    # Default 7 days at CASH_YIELD_ANNUAL
     portfolio.apply_cash_yield()
-    
-    # Cash interest is CASH * (1 + annual_yield/52)
-    expected = 1000.0 * (1.0 + CASH_YIELD_ANNUAL / 52.0)
+    expected = 1000.0 * (1.0 + CASH_YIELD_ANNUAL * 7.0 / 365.0)
     assert portfolio.shares["CASH"] == pytest.approx(expected, 1e-6)
+
+    # Custom rf and days
+    portfolio.shares["CASH"] = 1000.0
+    portfolio.apply_cash_yield(rf=0.05, days=14)
+    expected_custom = 1000.0 * (1.0 + 0.05 * 14.0 / 365.0)
+    assert portfolio.shares["CASH"] == pytest.approx(expected_custom, 1e-6)
+
+
+def test_portfolio_slippage():
+    """Verify slippage reduces portfolio value and TWR unit proportionally."""
+    portfolio = Portfolio()
+    prices = {"QQQ": 100.0, "QLD": 50.0, "TQQQ": 25.0, "CASH": 1.0}
+    target_alloc = {"QQQ": 1.0, "QLD": 0.0, "TQQQ": 0.0, "CASH": 0.0}
+    # Initial buy of $10,000 with 100 bps slippage (1%)
+    # Turnover on non-cash QQQ is $10,000. Cost = $100. Post-cost value = $9900.
+    portfolio.rebalance(target_alloc, prices, contribution=10000.0, slippage=0.01)
+    assert portfolio.get_value(prices) == pytest.approx(9900.0)
+    assert portfolio.twr_unit == pytest.approx(0.99)
+
+
+def test_portfolio_snapshot_rf_annual():
+    """Verify snapshot records rf_annual."""
+    portfolio = Portfolio()
+    prices = {"QQQ": 100.0, "QLD": 50.0, "TQQQ": 25.0, "CASH": 1.0}
+    portfolio.rebalance({"QQQ": 1.0}, prices, contribution=1000.0)
+    snap = portfolio.record_snapshot(pd.Timestamp("2020-01-03"), prices, contribution=1000.0, rf_annual=0.035)
+    assert snap.rf_annual == 0.035
+    df = portfolio.get_history_df()
+    assert "rf_annual" in df.columns
+    assert df["rf_annual"].iloc[0] == 0.035
+

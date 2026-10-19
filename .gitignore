@@ -13,6 +13,8 @@ __pycache__/
 data/etf_prices.csv
 data/etf_prices_*.csv
 data/vix_data.csv
+data/rates_irx.csv
+data/cache_meta_*.json
 
 # Scratch work
 scratch/

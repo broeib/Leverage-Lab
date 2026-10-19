@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SMA Trend Regime Simulator</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" integrity="sha384-cCVCZkAjYNxaYKbM8lsArLznDF/SvMFr1jcZrvOpSTCa0W40ZAdLzHCEulnUa5i7" crossorigin="anonymous"></script>
     <style>
         :root {
             --bg-main: #060814;
@@ -854,7 +855,7 @@
                 </div>
                 <div class="comp-rule-block" style="margin-top: 0.5rem;">
                     <span class="comp-rule-label">Enhanced Quant SMA</span>
-                    <span class="comp-rule-val" style="color: var(--accent-blue); font-weight: 500;">Yield CASH Sweep. Exits completely to CASH during bear regimes, compounding weekly at 4.5% yield (modeled on SGOV short-term Treasuries).</span>
+                    <span class="comp-rule-val" style="color: var(--accent-blue); font-weight: 500;">Yield CASH Sweep. Exits completely to CASH during bear regimes, earning the historical 13-week T-bill rate (a proxy for SGOV-style short-term Treasuries).</span>
                 </div>
             </div>
         </div>
@@ -1017,7 +1018,7 @@
                     <div class="legend-icon">🔴</div>
                     <div>
                         <div class="legend-title">CASH (Treasury Yield)</div>
-                        <div class="legend-desc">Price breaks below SMA_200 buffer band. Tactical exit to high-yield risk-free Cash (compounding at 4.5% yield to build capital).</div>
+                        <div class="legend-desc">Price breaks below SMA_200 buffer band. Tactical exit to high-yield risk-free Cash (earning the 13-week T-bill rate).</div>
                     </div>
                 </div>`;
             }
@@ -1116,7 +1117,7 @@
                 
                 let isRsiSafe = item.rsi < 70;
                 let isMacdSafe = item.macd_h >= 0;
-                let isVixSafe = item.vix < 25;
+                let isVixSafe = item.vix === null || item.vix === undefined || item.vix < 25;
                 
                 let alloc = item.enh_all;
                 let allocSubText = alloc === 'TQQQ' ? '3x Confirmed Leverage' 
@@ -1165,8 +1166,8 @@
                             <span style="font-weight: 700;">${isMacdSafe ? '✅ BULLISH' : '❌ BEARISH'}</span>
                         </div>
                         <div class="hud-item ${isVixSafe ? 'status-ok' : 'status-fail'}">
-                            <span style="font-weight: 500;">⚠️ VIX Index = ${item.vix.toFixed(1)} (&lt; 25)</span>
-                            <span style="font-weight: 700;">${isVixSafe ? '✅ SAFE' : '🔥 HIGH STRESS'}</span>
+                            <span style="font-weight: 500;">⚠️ VIX Index = ${item.vix !== null && item.vix !== undefined ? item.vix.toFixed(1) : 'N/A'} (&lt; 25)</span>
+                            <span style="font-weight: 700;">${item.vix !== null && item.vix !== undefined ? (isVixSafe ? '✅ SAFE' : '🔥 HIGH STRESS') : '⚪ N/A (PRE-VIX)'}</span>
                         </div>
                     </div>
                     

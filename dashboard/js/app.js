@@ -50,6 +50,40 @@
         return Math.sqrt(variance);
     }
 
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function getRiskFreeMap() {
+        if (window._rfMapCache && window._rfMapSource === (DATA ? DATA.risk_free : null)) {
+            return window._rfMapCache;
+        }
+        const map = new Map();
+        if (DATA && DATA.risk_free && Array.isArray(DATA.risk_free.dates) && Array.isArray(DATA.risk_free.annual)) {
+            for (let i = 0; i < DATA.risk_free.dates.length; i++) {
+                map.set(DATA.risk_free.dates[i], DATA.risk_free.annual[i]);
+            }
+        }
+        window._rfMapCache = map;
+        window._rfMapSource = DATA ? DATA.risk_free : null;
+        return map;
+    }
+
+    function getRiskFreeAnnual(dateStr) {
+        const map = getRiskFreeMap();
+        if (dateStr && map.has(dateStr)) {
+            return map.get(dateStr);
+        }
+        return 0.04;
+    }
+
+
     // =========================================================================
     // DCA CLIENT-SIDE SIMULATION ENGINE
     // =========================================================================
@@ -181,41 +215,43 @@
 
             const maxDrawdown = Math.max(...recDrawdowns);
 
-            const riskFreeWeekly = 0.04 / 52;
             let sharpe = 0.0;
+            let sortino = 0.0;
             if (weeklyReturns.length > 1) {
-                const mean = weeklyReturns.reduce((a, b) => a + b, 0) / weeklyReturns.length;
-                const excessMean = mean - riskFreeWeekly;
+                // Time-varying risk-free from DATA.risk_free (map by date; fallback 0.04)
+                const excessReturns = [];
+                for (let i = 0; i < weeklyReturns.length; i++) {
+                    const d = recDates[i + 1];
+                    const rfAnnual = getRiskFreeAnnual(d);
+                    const rfWeekly = rfAnnual / 52;
+                    excessReturns.push(weeklyReturns[i] - rfWeekly);
+                }
+
+                const excessMean = excessReturns.reduce((a, b) => a + b, 0) / excessReturns.length;
                 const s = std(weeklyReturns);
                 if (s > 0) {
                     sharpe = (excessMean / s) * Math.sqrt(52);
                 }
-            }
 
-            // Sortino ratio (standard downside deviation)
-            let sortino = 0.0;
-            if (weeklyReturns.length > 1) {
-                const mean = weeklyReturns.reduce((a, b) => a + b, 0) / weeklyReturns.length;
-                const excessMean = mean - riskFreeWeekly;
-                // Standard downside deviation: sqrt(mean(min(r - rf, 0)^2))
+                // Sortino ratio (downside deviation basis)
                 let sumSquaredDownside = 0.0;
-                for (let i = 0; i < weeklyReturns.length; i++) {
-                    const diff = weeklyReturns[i] - riskFreeWeekly;
+                for (let i = 0; i < excessReturns.length; i++) {
+                    const diff = excessReturns[i];
                     if (diff < 0) {
                         sumSquaredDownside += diff * diff;
                     }
                 }
-                const downsideDev = Math.sqrt(sumSquaredDownside / weeklyReturns.length);
+                const downsideDev = Math.sqrt(sumSquaredDownside / excessReturns.length);
                 if (downsideDev > 0) {
                     sortino = (excessMean / downsideDev) * Math.sqrt(52);
                 } else {
                     sortino = excessMean > 0 ? 99.99 : 0.0;
                 }
             }
-            sortino = Math.min(99.99, Math.max(0.0, sortino));
+            // Do NOT clamp Sortino/Calmar to >=0 (only cap at 99.99 upper like Python)
+            sortino = Math.min(99.99, sortino);
 
-            let calmar = maxDrawdown > 0 ? cagr / maxDrawdown : 99.99;
-            calmar = Math.min(99.99, Math.max(0.0, calmar));
+            let calmar = maxDrawdown > 0 ? Math.min(99.99, cagr / maxDrawdown) : 99.99;
 
             let rebalanceCount = 0;
             const origAlloc = DATA.allocation_history[name];
@@ -234,8 +270,11 @@
                 }
             }
 
+            const origSummaryItem = DATA.summary ? DATA.summary.find(s => s.Strategy === name) : null;
+
             summaryList.push({
                 Strategy: name,
+                description: origSummaryItem ? origSummaryItem.description : undefined,
                 total_value: finalValue,
                 total_invested: totalInvested,
                 profit: profit,
@@ -307,13 +346,29 @@
     // DATA LOADING & INITIALIZATION
     // =========================================================================
 
+    function getSavedUniverse() {
+        try {
+            return localStorage.getItem('activeUniverse') || 'qqq';
+        } catch (e) {
+            return 'qqq';
+        }
+    }
+
+    function setSavedUniverse(universeKey) {
+        try {
+            localStorage.setItem('activeUniverse', universeKey);
+        } catch (e) {
+            // ignore storage errors
+        }
+    }
+
     async function loadData() {
-        const savedUniverse = localStorage.getItem('activeUniverse') || 'qqq';
+        const savedUniverse = getSavedUniverse();
         await loadUniverse(savedUniverse);
         initUniverseToggle();
     }
 
-    async function loadUniverse(universeKey) {
+    async function loadUniverse(universeKey, isFallback = false) {
         try {
             document.getElementById('loadingState').style.display = 'flex';
 
@@ -327,8 +382,20 @@
             }
 
             ACTIVE_UNIVERSE = universeKey;
-            localStorage.setItem('activeUniverse', universeKey);
+            setSavedUniverse(universeKey);
             UNIVERSE_META = DATA.universe || null;
+
+            // Sync toggle buttons with ACTIVE_UNIVERSE
+            const toggle = document.getElementById('universeToggle');
+            if (toggle) {
+                toggle.querySelectorAll('button').forEach(btn => {
+                    if (btn.dataset.universe === ACTIVE_UNIVERSE) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
 
             // Update BENCHMARK_NAMES from real ticker names in the data
             if (UNIVERSE_META) {
@@ -359,6 +426,10 @@
 
             initDashboard();
         } catch (err) {
+            if (!isFallback && universeKey !== 'qqq') {
+                console.warn(`Failed to load universe "${universeKey}", falling back to "qqq":`, err);
+                return await loadUniverse('qqq', true);
+            }
             document.getElementById('loadingState').innerHTML = `
                 <div style="color: var(--red); font-size: 1.1rem; font-weight: 600;">Failed to load data</div>
                 <div style="color: var(--text-muted); font-size: 0.85rem; max-width: 500px; text-align: center;">
@@ -395,6 +466,25 @@
     }
 
     function updateHeroForUniverse() {
+        // Update caveat banner under hero
+        const bannerEl = document.getElementById('assumptionsBanner');
+        if (bannerEl) {
+            if (DATA && DATA.assumptions) {
+                const a = DATA.assumptions;
+                const bps = a.slippage != null ? Math.round(a.slippage * 10000) : 0;
+                const tickers = (UNIVERSE_META && UNIVERSE_META.tickers) || {};
+                let synText = '';
+                if (a.synthetic_before && typeof a.synthetic_before === 'object') {
+                    const parts = Object.entries(a.synthetic_before).map(([role, d]) => `${tickers[role] || role} before ${d}`);
+                    if (parts.length > 0) synText = ` (${parts.join(', ')})`;
+                }
+                bannerEl.textContent = `Prices are modelled from the index before each fund existed${synText}. Trades fill at the next day's close with ${bps} bps costs; cash earns the 13-week T-bill rate.`;
+                bannerEl.style.display = 'block';
+            } else {
+                bannerEl.style.display = 'none';
+            }
+        }
+
         if (!UNIVERSE_META) return;
         const t = UNIVERSE_META.tickers;
         const key = UNIVERSE_META.key;
@@ -528,25 +618,25 @@
         cards.innerHTML = `
             <div class="best-card return">
                 <div class="award">🚀 Highest Return</div>
-                <div class="strat-name"><span class="strategy-name-link" onclick="openStrategyModal('${bestReturn.Strategy.replace(/'/g, "\\'")}')">${bestReturn.Strategy}</span></div>
+                <div class="strat-name"><span class="strategy-name-link" data-strategy-name="${escapeHtml(bestReturn.Strategy)}">${escapeHtml(bestReturn.Strategy)}</span></div>
                 <div class="strat-value" style="color: var(--cyan)">${bestReturn.total_return_pct.toFixed(2)}%</div>
                 <div class="strat-label">$${Number(bestReturn.total_value.toFixed(0)).toLocaleString()} final value</div>
             </div>
             <div class="best-card sharpe">
                 <div class="award">📊 Best Risk-Adjusted</div>
-                <div class="strat-name"><span class="strategy-name-link" onclick="openStrategyModal('${bestSharpe.Strategy.replace(/'/g, "\\'")}')">${bestSharpe.Strategy}</span></div>
+                <div class="strat-name"><span class="strategy-name-link" data-strategy-name="${escapeHtml(bestSharpe.Strategy)}">${escapeHtml(bestSharpe.Strategy)}</span></div>
                 <div class="strat-value" style="color: var(--accent-1)">${bestSharpe.sharpe_ratio.toFixed(3)}</div>
                 <div class="strat-label">Sharpe Ratio</div>
             </div>
             <div class="best-card drawdown">
                 <div class="award">🛡️ Lowest Drawdown</div>
-                <div class="strat-name"><span class="strategy-name-link" onclick="openStrategyModal('${bestDrawdown.Strategy.replace(/'/g, "\\'")}')">${bestDrawdown.Strategy}</span></div>
+                <div class="strat-name"><span class="strategy-name-link" data-strategy-name="${escapeHtml(bestDrawdown.Strategy)}">${escapeHtml(bestDrawdown.Strategy)}</span></div>
                 <div class="strat-value" style="color: var(--accent-3)">${bestDrawdown.max_drawdown_pct.toFixed(2)}%</div>
                 <div class="strat-label">Max Drawdown</div>
             </div>
             <div class="best-card calmar">
                 <div class="award">⚖️ Best Calmar</div>
-                <div class="strat-name"><span class="strategy-name-link" onclick="openStrategyModal('${bestCalmar.Strategy.replace(/'/g, "\\'")}')">${bestCalmar.Strategy}</span></div>
+                <div class="strat-name"><span class="strategy-name-link" data-strategy-name="${escapeHtml(bestCalmar.Strategy)}">${escapeHtml(bestCalmar.Strategy)}</span></div>
                 <div class="strat-value" style="color: var(--green)">${bestCalmar.calmar_ratio.toFixed(3)}</div>
                 <div class="strat-label">CAGR / Max Drawdown</div>
             </div>
@@ -637,7 +727,7 @@
 
                 switch (c.format) {
                     case 'text':
-                        display = `<span class="strategy-dot" style="background:${color}"></span><span class="strategy-name-link" onclick="openStrategyModal('${val.replace(/'/g, "\\'")}')">${val}</span>`;
+                        display = `<span class="strategy-dot" style="background:${color}"></span><span class="strategy-name-link" data-strategy-name="${escapeHtml(val)}">${escapeHtml(val)}</span>`;
                         break;
                     case 'dollar':
                         display = `$${Number(Math.round(val)).toLocaleString()}`;
@@ -1320,37 +1410,43 @@
             const len = origEquity.dates.length;
             const C_arr = new Float64Array(len);
             const F_arr = new Float64Array(len);
+            const cumProdF = new Float64Array(len);
             
             C_arr[0] = 5000.0;
             F_arr[0] = 1.0;
+            cumProdF[0] = 1.0;
             
             for (let t = 1; t < len; t++) {
                 C_arr[t] = Math.max(0.0, origEquity.invested[t] - origEquity.invested[t-1]);
                 const prevVal = origEquity.values[t-1];
-                F_arr[t] = prevVal > 0 ? (origEquity.values[t] - C_arr[t]) / prevVal : 1.0;
+                const f = prevVal > 0 ? (origEquity.values[t] - C_arr[t]) / prevVal : 1.0;
+                F_arr[t] = f;
+                cumProdF[t] = cumProdF[t-1] * f;
             }
             
             PRECOMPUTED_SERIES[name] = {
                 dates: origEquity.dates,
                 C: C_arr,
-                F: F_arr
+                F: F_arr,
+                cumProdF: cumProdF
             };
         });
     }
 
-    function fastDCASimulate(strategyName, startIndex, endIndex) {
+    function fastDCASimulate(strategyName, startIndex, endIndex, startingCashInput, userWeeklyDcaInput) {
         const pre = PRECOMPUTED_SERIES[strategyName];
         if (!pre) return { totalReturn: 0, maxDD: 0, finalValue: 0, totalInvested: 0 };
         
         const C = pre.C;
         const F = pre.F;
+        const cumProdF = pre.cumProdF;
         
-        const startingCash = parseFloat(document.getElementById('starting-cash').value) || 0.0;
-        const userWeeklyDca = parseFloat(document.getElementById('weekly-dca').value) || 0.0;
+        const startingCash = startingCashInput !== undefined ? startingCashInput : (parseFloat(document.getElementById('starting-cash')?.value) || 0.0);
+        const userWeeklyDca = userWeeklyDcaInput !== undefined ? userWeeklyDcaInput : (parseFloat(document.getElementById('weekly-dca')?.value) || 0.0);
         
         let currentValue = startingCash + userWeeklyDca;
         let totalInvested = startingCash + userWeeklyDca;
-        let peakVpd = totalInvested > 0 ? currentValue / totalInvested : 0;
+        let peakTwr = cumProdF ? cumProdF[startIndex] : 1.0;
         let maxDD = 0.0;
         
         for (let t = startIndex + 1; t <= endIndex; t++) {
@@ -1358,19 +1454,21 @@
             currentValue = currentValue * F[t] + cashContribution;
             totalInvested += cashContribution;
             
-            // Track drawdown on per-dollar-invested basis (not masked by DCA)
-            const vpd = totalInvested > 0 ? currentValue / totalInvested : 0;
-            if (vpd > peakVpd) {
-                peakVpd = vpd;
-            }
-            const dd = peakVpd > 0 ? ((peakVpd - vpd) / peakVpd) * 100.0 : 0.0;
-            if (dd > maxDD) {
-                maxDD = dd;
+            // Track drawdown on Time-Weighted Return (TWR) basis (same definition as summary table)
+            if (cumProdF) {
+                const twr = cumProdF[t];
+                if (twr > peakTwr) {
+                    peakTwr = twr;
+                }
+                const dd = peakTwr > 0 ? ((peakTwr - twr) / peakTwr) * 100.0 : 0.0;
+                if (dd > maxDD) {
+                    maxDD = dd;
+                }
             }
         }
         
         const profit = currentValue - totalInvested;
-        const totalReturn = (profit / totalInvested) * 100.0;
+        const totalReturn = totalInvested > 0 ? (profit / totalInvested) * 100.0 : 0.0;
         
         return {
             totalReturn: totalReturn,
@@ -1399,6 +1497,9 @@
         const allNames = DATA.summary.map(s => s.Strategy);
         const dates = DATA.equity_curves[allNames[0]].dates;
 
+        const startingCash = parseFloat(document.getElementById('starting-cash')?.value) || 0.0;
+        const userWeeklyDca = parseFloat(document.getElementById('weekly-dca')?.value) || 0.0;
+
         const regimes = [
             { name: "Great Bull", start: "2010-02-12", end: "2019-12-31" },
             { name: "COVID Cycle", start: "2020-01-01", end: "2021-12-31" },
@@ -1411,7 +1512,7 @@
             const row = { Strategy: name, regimeStats: [] };
             regimes.forEach(reg => {
                 const indices = findRegimeIndices(dates, reg.start, reg.end);
-                const sim = fastDCASimulate(name, indices.start, indices.end);
+                const sim = fastDCASimulate(name, indices.start, indices.end, startingCash, userWeeklyDca);
                 row.regimeStats.push({
                     name: reg.name,
                     returnPct: sim.totalReturn,
@@ -1494,6 +1595,10 @@
 
         const W = Math.round(years * 52.177);
 
+        // Read the two DOM inputs once per updateRollingHorizon call
+        const startingCash = parseFloat(document.getElementById('starting-cash')?.value) || 0.0;
+        const userWeeklyDca = parseFloat(document.getElementById('weekly-dca')?.value) || 0.0;
+
         const buttons = document.querySelectorAll('#horizonButtons button');
         buttons.forEach(btn => btn.classList.remove('active'));
         buttons.forEach(btn => {
@@ -1519,7 +1624,7 @@
         for (let i = 0; i < numStartWeeks; i++) {
             const startD = dates[i];
             allNames.forEach((name, idx) => {
-                const sim = fastDCASimulate(name, i, i + W);
+                const sim = fastDCASimulate(name, i, i + W, startingCash, userWeeklyDca);
                 rollingCurves[name].push({ x: startD, y: sim.totalReturn });
                 horizonSummary[idx].returns.push(sim.totalReturn);
                 horizonSummary[idx].drawdowns.push(sim.maxDD);
@@ -1832,7 +1937,7 @@
             style: "Quantitative Trend-Following",
             complexity: "Advanced",
             indicators: ["SMA 50", "SMA 200", "RSI", "MACD Histogram", "VIX Index", "Yield-bearing sweep"],
-            philosophy: "An institutional-grade quant strategy. It uses asymmetric buffer bands (hysteresis loops) around the 50 and 200 SMAs to completely ignore noise and whipsaw. It requires multiple filters (RSI, VIX, MACD) to confirm trends, and sweeps assets to interest-bearing cash (SGOV, 4.5% yield) when bear markets trigger.",
+            philosophy: "An institutional-grade quant strategy. It uses asymmetric buffer bands (hysteresis loops) around the 50 and 200 SMAs to completely ignore noise and whipsaw. It requires multiple filters (RSI, VIX, MACD) to confirm trends, and sweeps assets to interest-bearing cash (earning the historical T-bill rate) when bear markets trigger.",
             mechanism: "Determines bull/bear using a +3%/-1.5% buffer band around SMA 200, and scales strong/mild leverage using a +2%/-1% buffer around SMA 50. Allocates to TQQQ only when RSI, VIX, and MACD confirm. Sweeps defensive assets into 100% CASH.",
             rules: [
                 { cond: "Bull Strong Crossover + Momentum Confirmation", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
@@ -1850,7 +1955,7 @@
             complexity: "Moderate",
             indicators: ["SMA 50 (QQQ)", "SMA 200 (QQQ)", "SPAXX Money Market Sweep"],
             philosophy: "A graduated de-escalation architecture that replaces binary all-or-nothing shocks with a 4-tier ladder. It eliminates the fatal flaw of holding 1x equities in structural bear markets (which produced a -97% drawdown in the original model), while capturing maximum bull runs and smoothing intermediate pullbacks.",
-            mechanism: "Evaluates unleveraged QQQ against its 50-day and 200-day SMAs. Above both: 100% TQQQ (3x). Above 200 but below 50: 100% QLD (2x). Below 200 but above 50: 100% QQQ (1x). Below both: 100% SPAXX (Cash earning 4.5% yield).",
+            mechanism: "Evaluates unleveraged QQQ against its 50-day and 200-day SMAs. Above both: 100% TQQQ (3x). Above 200 but below 50: 100% QLD (2x). Below 200 but above 50: 100% QQQ (1x). Below both: 100% SPAXX (cash earning the T-bill rate).",
             rules: [
                 { cond: "Price > 50 SMA AND Price > 200 SMA (Strong Bull)", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
                 { cond: "Price < 50 SMA BUT Price > 200 SMA (Bull Pullback)", alloc: { "TQQQ": 0, "QLD": 100, "QQQ": 0, "CASH": 0 } },
@@ -2292,7 +2397,7 @@
                 </div>
                 <div class="def-card-footer">
                     ${perfStatsHtml}
-                    <button class="def-card-btn" onclick="openStrategyModal('${name.replace(/'/g, "\\'")}')">Explore Rules →</button>
+                    <button class="def-card-btn" data-strategy-name="${escapeHtml(name)}">Explore Rules →</button>
                 </div>
             `;
             grid.appendChild(card);
@@ -2319,5 +2424,12 @@
     // =========================================================================
     // INIT
     // =========================================================================
+
+    // Strategy names are rendered with data-strategy-name (escaped) instead of inline
+    // onclick handlers; one delegated listener opens the modal for all of them.
+    document.addEventListener('click', (event) => {
+        const target = event.target.closest('[data-strategy-name]');
+        if (target) openStrategyModal(target.dataset.strategyName);
+    });
 
     document.addEventListener('DOMContentLoaded', loadData);

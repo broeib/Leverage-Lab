@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Dict, List, Any
 import pandas as pd
-from engine.constants import VALID_TICKERS, CASH_YIELD_ANNUAL
+from engine.constants import VALID_TICKERS, CASH_YIELD_ANNUAL, RISK_FREE_RATE_ANNUAL
 
 
 @dataclass
@@ -25,6 +25,8 @@ class PortfolioSnapshot:
     twr_unit: float                   # Time-weighted return unit value
     peak_twr_unit: float              # Peak TWR unit value
     drawdown_pct_twr: float           # Drawdown based on TWR
+    rf_annual: float = RISK_FREE_RATE_ANNUAL
+
 
 
 class Portfolio:
@@ -171,24 +173,25 @@ class Portfolio:
             "peak_value_per_dollar": self.peak_value_per_dollar,
         }
 
-    def apply_cash_yield(self) -> None:
-        """Apply interest yield to cash balance held in portfolio."""
-        if self.shares["CASH"] > 0:
-            weekly_yield = CASH_YIELD_ANNUAL / 52.0
-            self.shares["CASH"] *= (1.0 + weekly_yield)
+    def apply_cash_yield(self, rf: float = CASH_YIELD_ANNUAL, days: int = 7) -> None:
+        """Apply interest yield to cash balance held in portfolio based on elapsed calendar days."""
+        if self.shares["CASH"] > 0 and days > 0:
+            self.shares["CASH"] *= (1.0 + rf * (days / 365.0))
 
     def rebalance(
         self,
         target_allocation: Dict[str, float],
         prices: Dict[str, float],
         contribution: float = 0.0,
+        slippage: float = 0.0,
     ) -> None:
-        """Rebalance portfolio to target allocation, adding a contribution.
+        """Rebalance portfolio to target allocation, adding a contribution and accounting for slippage.
 
         Args:
             target_allocation: Target percentages {ticker: pct} summing to ~1.0.
             prices: Current asset prices {ticker: price}.
             contribution: Cash contribution to add before rebalancing (e.g. $5000 weekly).
+            slippage: Proportional transaction cost charged on turnover.
         """
         # Calculate market growth before adding contribution
         if self.last_value_post_rebalance > 0:
@@ -198,23 +201,39 @@ class Portfolio:
             if self.twr_unit > self.peak_twr_unit:
                 self.peak_twr_unit = self.twr_unit
 
-        # Add contribution to total invested
+        # Pre-trade value and contribution
+        pre_trade_value = self.get_value(prices)
         self.total_invested += contribution
+        available_value = pre_trade_value + contribution
 
-        # Current portfolio value + new contribution
-        current_value = self.get_value(prices) + contribution
-
-        if current_value <= 0:
+        if available_value <= 0:
             return
 
-        # Calculate target shares for each asset
+        # Transaction costs:
+        # turnover = sum over non-CASH tickers of |target_value - current_value|
+        non_cash_tickers = [t for t in VALID_TICKERS if t != "CASH"]
+        turnover = sum(
+            abs(available_value * target_allocation.get(t, 0.0) - self.shares.get(t, 0.0) * prices.get(t, 0.0))
+            for t in non_cash_tickers
+        )
+        cost = slippage * turnover
+        post_cost_value = max(0.0, available_value - cost)
+
+        # Calculate target shares for each asset based on post-cost total
         for ticker in VALID_TICKERS:
-            target_value = current_value * target_allocation.get(ticker, 0.0)
+            target_value = post_cost_value * target_allocation.get(ticker, 0.0)
             price = prices.get(ticker, 0.0)
             if price > 0:
                 self.shares[ticker] = target_value / price
             else:
                 self.shares[ticker] = 0.0
+
+        # TWR unit must include transaction cost:
+        # after rebalancing, multiply twr_unit by (post_cost_value / (pre_trade_value + contribution))
+        if available_value > 0:
+            self.twr_unit *= (post_cost_value / available_value)
+            if self.twr_unit > self.peak_twr_unit:
+                self.peak_twr_unit = self.twr_unit
 
         # Update absolute and per-dollar peaks
         new_value = self.get_value(prices)
@@ -232,7 +251,8 @@ class Portfolio:
         self, 
         date: pd.Timestamp, 
         prices: Dict[str, float],
-        contribution: float = 0.0
+        contribution: float = 0.0,
+        rf_annual: float = RISK_FREE_RATE_ANNUAL,
     ) -> PortfolioSnapshot:
         """Record a snapshot of the current portfolio state to history.
 
@@ -240,6 +260,7 @@ class Portfolio:
             date: CurrentTimestamp date.
             prices: Current asset prices.
             contribution: Cash contribution made this period.
+            rf_annual: Risk-free rate annualized for this period.
 
         Returns:
             PortfolioSnapshot: The recorded state snapshot.
@@ -268,6 +289,7 @@ class Portfolio:
             twr_unit=self.twr_unit,
             peak_twr_unit=self.peak_twr_unit,
             drawdown_pct_twr=drawdown_twr,
+            rf_annual=rf_annual,
         )
         self.history.append(snapshot)
         return snapshot
@@ -296,6 +318,7 @@ class Portfolio:
                 "peak_twr_unit": snap.peak_twr_unit,
                 "drawdown_pct_twr": snap.drawdown_pct_twr,
                 "weekly_contribution": snap.weekly_contribution,
+                "rf_annual": getattr(snap, "rf_annual", RISK_FREE_RATE_ANNUAL),
                 "QQQ_value": snap.values.get("QQQ", 0.0),
                 "QLD_value": snap.values.get("QLD", 0.0),
                 "TQQQ_value": snap.values.get("TQQQ", 0.0),
