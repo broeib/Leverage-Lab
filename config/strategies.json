@@ -1,4 +1,7 @@
 {
+  "backtest": {
+    "execution_lag_days": 1
+  },
   "strategies": {
     "sma_trend": {
       "default_regime": {
@@ -39,15 +42,16 @@
   "universes": {
     "qqq": {
       "weekly_contribution": 5000.0,
-      "slippage": 0.0
+      "slippage": 0.0005
     },
     "soxx": {
       "weekly_contribution": 5000.0,
-      "slippage": 0.0
+      "slippage": 0.0005
     },
     "spy": {
       "weekly_contribution": 5000.0,
-      "slippage": 0.0
+      "slippage": 0.0005
     }
   }
 }
+

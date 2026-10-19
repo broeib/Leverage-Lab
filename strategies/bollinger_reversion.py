@@ -1,6 +1,7 @@
 """Strategy 4: Bollinger Band Mean Reversion — uses Bollinger Bands to identify overextension."""
 
 from typing import Dict
+import numpy as np
 from strategies.base import BaseStrategy
 
 
@@ -27,7 +28,6 @@ class BollingerReversionStrategy(BaseStrategy):
         bb_middle = market_data.get("BB_Middle")
         bb_lower = market_data.get("BB_Lower")
 
-        import numpy as np
         if any(v is None or (isinstance(v, float) and np.isnan(v))
                for v in [bb_upper, bb_middle, bb_lower]):
             return {"QQQ": 0.34, "QLD": 0.33, "TQQQ": 0.33}
