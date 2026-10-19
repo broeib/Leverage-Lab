@@ -113,8 +113,16 @@ class EMAChannelV2Strategy(BaseStrategy):
          - it is below its 100-day EMA (trend pause)
          - 20-day realised volatility exceeds 40% annualised (volatility gate)
 
-    Across all three universes the overlay roughly halves max drawdown
-    (e.g. NASDAQ-100 80% -> 49%) with no loss of CAGR versus the base ladder.
+    These thresholds were originally chosen on the full history using data with
+    a since-fixed OHLC adjustment bug, so they are in-sample. Re-running the
+    sweep on corrected data (pre-2019 train, 2019+ holdout, next-day fills,
+    5 bps costs) shows:
+      - The base (200 EMA, +/-1% buffers) is no longer a standout: it ranks
+        ~180th of 495 stage-1 variants on train Calmar.
+      - On the 2019+ holdout the overlay still cuts max drawdown versus the
+        base ladder (NASDAQ-100 68% -> 40%, SOXX 77% -> 68%, S&P 47% -> 42%),
+        with holdout CAGR within a few points (higher on QQQ/SOXX, lower on SPY).
+    See ``results/ema_channel_sweep_stage{1,2}.csv``.
     All thresholds are read from ``config/strategies.json`` (``ema_channel``).
     """
 

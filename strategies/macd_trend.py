@@ -1,6 +1,7 @@
 """Strategy 5: MACD Trend Strength — uses MACD direction and sign to measure trend strength."""
 
 from typing import Dict
+import numpy as np
 from strategies.base import BaseStrategy
 
 
@@ -25,7 +26,6 @@ class MACDTrendStrategy(BaseStrategy):
         macd = market_data.get("MACD")
         macd_signal = market_data.get("MACD_Signal")
 
-        import numpy as np
         if macd is None or macd_signal is None or np.isnan(macd) or np.isnan(macd_signal):
             return {"QQQ": 0.34, "QLD": 0.33, "TQQQ": 0.33}
 

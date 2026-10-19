@@ -15,7 +15,7 @@ import sys
 import argparse
 import itertools
 from dataclasses import dataclass, field
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any, Tuple
 
 import numpy as np
 import pandas as pd
@@ -24,12 +24,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
 from data.download_data import load_all_data, UNIVERSES
+from data.download_data import load_risk_free_rate
+from tools.config_loader import get_backtest_params
+from engine.metrics import compute_twr_metrics
 from indicators.ema_channel import compute_ema
 from indicators.rsi import add_rsi_column
 from engine.backtester import Backtester
-from engine.constants import RISK_FREE_RATE_ANNUAL, WEEKS_PER_YEAR
 from strategies.base import BaseStrategy
-from tools.config_loader import get_universe_params
 
 TQQQ = {"QQQ": 0.0, "QLD": 0.0, "TQQQ": 1.0, "CASH": 0.0}
 QLD = {"QQQ": 0.0, "QLD": 1.0, "TQQQ": 0.0, "CASH": 0.0}
@@ -105,6 +106,9 @@ class ParamEMAChannel(BaseStrategy):
         self.v = v
         self.prev_zone = "RED"
 
+    def reset(self) -> None:
+        self.prev_zone = "RED"
+
     @property
     def name(self) -> str:
         return self.v.name
@@ -167,23 +171,17 @@ class ParamEMAChannel(BaseStrategy):
         return alloc
 
 
-def twr_metrics(h: pd.DataFrame) -> Dict[str, float]:
-    """Time-weighted CAGR / Sharpe / max DD / Calmar for a slice of history."""
-    tv = h["total_value"]
-    c = h["weekly_contribution"]
-    prev = tv.shift(1)
-    r = ((tv - c - prev) / prev).iloc[1:]
-    r = r[prev.iloc[1:] > 0].replace([np.inf, -np.inf], np.nan).dropna()
-    if len(r) < 10:
-        return {"cagr": np.nan, "sharpe": np.nan, "maxdd": np.nan, "calmar": np.nan}
-    growth = (1 + r).cumprod()
-    years = len(r) / WEEKS_PER_YEAR
-    cagr = growth.iloc[-1] ** (1 / years) - 1
-    maxdd = -(growth / growth.cummax() - 1).min()
-    ex = r - RISK_FREE_RATE_ANNUAL / WEEKS_PER_YEAR
-    sharpe = ex.mean() / ex.std() * np.sqrt(WEEKS_PER_YEAR) if ex.std() > 0 else 0.0
-    calmar = cagr / maxdd if maxdd > 0 else np.nan
-    return {"cagr": cagr * 100, "sharpe": sharpe, "maxdd": maxdd * 100, "calmar": calmar}
+
+
+def split_train_holdout(history: pd.DataFrame, holdout_start: str = "2019-01-01") -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Split history into train (before holdout_start) and holdout (from holdout_start)."""
+    ts = pd.Timestamp(holdout_start)
+    if not isinstance(history.index, pd.DatetimeIndex):
+        idx = pd.to_datetime(history.index)
+        mask = idx < ts
+    else:
+        mask = history.index < ts
+    return history.loc[mask], history.loc[~mask]
 
 
 def prepare(universe: str, lengths: List[int]):
@@ -199,8 +197,15 @@ def prepare(universe: str, lengths: List[int]):
     for fe in (50, 100):
         df[f"EMA_CLOSE_{fe}"] = compute_ema(df["QQQ"], fe)
     df["RVOL_20"] = df["QQQ"].pct_change().rolling(20).std() * np.sqrt(252) * 100
-    contrib = get_universe_params(universe).get("weekly_contribution", 5000.0)
-    return Backtester(close, vix, df, weekly_contribution=contrib)
+
+    params = get_backtest_params(universe)
+    return Backtester(
+        close, vix, df,
+        weekly_contribution=params["weekly_contribution"],
+        rf_rate=load_risk_free_rate(close.index),
+        slippage=params["slippage"],
+        execution_lag_days=params["execution_lag_days"],
+    )
 
 
 def build_grid() -> List[Variant]:
@@ -218,7 +223,7 @@ def build_grid() -> List[Variant]:
     return grid
 
 
-def evaluate(bt: Backtester, universe: str, v: Variant) -> Dict[str, object]:
+def evaluate(bt: Backtester, universe: str, v: Variant, holdout_start: str = "2019-01-01") -> Dict[str, object]:
     """Run one variant on one universe and return a flat metrics row."""
     res = bt.run(ParamEMAChannel(v))
     h = res.history
@@ -227,10 +232,19 @@ def evaluate(bt: Backtester, universe: str, v: Variant) -> Dict[str, object]:
            "top_mult": v.top_mult, "bot_mult": v.bot_mult,
            "final_value": res.metrics["total_value"],
            "rebalances": res.metrics["rebalance_count"]}
-    for k, val in twr_metrics(h).items():
+
+    # Train and holdout metrics
+    train_h, holdout_h = split_train_holdout(h, holdout_start)
+    for k, val in compute_twr_metrics(train_h).items():
+        row[f"train_{k}"] = val
+    for k, val in compute_twr_metrics(holdout_h).items():
+        row[f"holdout_{k}"] = val
+
+    # Full and sub-periods
+    for k, val in compute_twr_metrics(h).items():
         row[f"full_{k}"] = val
     for pname, start, end in SUB_PERIODS:
-        for k, val in twr_metrics(h.loc[start:end]).items():
+        for k, val in compute_twr_metrics(h.loc[start:end]).items():
             row[f"{pname}_{k}"] = val
     return row
 
@@ -248,10 +262,10 @@ def _worker_init(lengths: List[int]) -> None:
 
 
 def _worker_run(job) -> Dict[str, object]:
-    universe, v = job
+    universe, v, holdout_start = job
     if universe not in _WORKER_BT:
         _WORKER_BT[universe] = prepare(universe, _WORKER_LENGTHS)
-    return evaluate(_WORKER_BT[universe], universe, v)
+    return evaluate(_WORKER_BT[universe], universe, v, holdout_start)
 
 
 def build_grid_stage2() -> List[Variant]:
@@ -274,12 +288,13 @@ def main() -> None:
     ap.add_argument("--out", default=os.path.join(BASE_DIR, "results", "ema_channel_sweep.csv"))
     ap.add_argument("--universes", default=",".join(UNIVERSES.keys()))
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
+    ap.add_argument("--holdout-start", default="2019-01-01", help="start date for held-out evaluation period")
     args = ap.parse_args()
 
     universes = args.universes.split(",")
     grid = build_grid_stage2() if args.stage2 else build_grid()
     lengths = sorted({v.length for v in grid})
-    jobs = [(u, v) for u in universes for v in grid]
+    jobs = [(u, v, args.holdout_start) for u in universes for v in grid]
     print(f"{len(grid)} variants x {len(universes)} universes = {len(jobs)} runs on {args.workers} workers", flush=True)
 
     # Make sure caches exist before forking workers so they don't all download at once
@@ -299,9 +314,20 @@ def main() -> None:
     df.to_csv(args.out, index=False)
     print(f"Saved {len(df)} rows to {args.out}")
 
+    print("\nTop variants by Train Calmar:")
+    for u in universes:
+        udf = df[df["universe"] == u]
+        if "train_calmar" in udf.columns and not udf["train_calmar"].dropna().empty:
+            top = udf.sort_values(by="train_calmar", ascending=False).head(5)
+            cols = ["variant", "train_cagr", "train_maxdd", "train_calmar", "holdout_cagr", "holdout_maxdd", "holdout_calmar"]
+            avail_cols = [c for c in cols if c in top.columns]
+            print(f"\n--- Universe: {u.upper()} (Ranked by Train Calmar) ---")
+            print(top[avail_cols].to_string(index=False))
+
 
 if __name__ == "__main__":
     # Quiet the per-strategy engine logging during the sweep
     import logging
     logging.getLogger("LeverageLab").setLevel(logging.WARNING)
     main()
+

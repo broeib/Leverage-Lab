@@ -1,8 +1,9 @@
 """Strategy 9: Enhanced Quant SMA — incorporates decoupled signals, asymmetric buffers, multi-signal confirmation, and high-yield cash sweep."""
 
-from typing import Dict
+from typing import Dict, Optional
 import numpy as np
 from strategies.base import BaseStrategy
+from tools.config_loader import get_strategy_params
 
 
 class EnhancedSMATrendStrategy(BaseStrategy):
@@ -16,12 +17,50 @@ class EnhancedSMATrendStrategy(BaseStrategy):
        - RSI < 70 (not extremely overbought)
        - MACD Histogram is positive (MACD > MACD_Signal, bullish momentum)
        - VIX < 25 (low/moderate volatility environment)
-    4. Yield-Bearing Safe Haven: Moves to high-yield CASH (modeled at 4.5% yield) during downtrends.
+    4. Yield-Bearing Safe Haven: Moves to high-yield CASH (modeled at the historical 13-week T-bill rate) during downtrends.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        sma_200_upper_multiplier: Optional[float] = None,
+        sma_200_lower_multiplier: Optional[float] = None,
+        sma_50_upper_multiplier: Optional[float] = None,
+        sma_50_lower_multiplier: Optional[float] = None,
+        rsi_overbought_threshold: Optional[float] = None,
+        vix_safe_threshold: Optional[float] = None,
+    ) -> None:
         # State tracking for hysteresis loop
         self.prev_regime = "BEAR"  # "BULL_STRONG", "BULL_MILD", "BEAR"
+
+        cfg = get_strategy_params("enhanced_sma")
+        self.sma_200_upper_multiplier = (
+            float(sma_200_upper_multiplier) if sma_200_upper_multiplier is not None
+            else float(cfg.get("sma_200_upper_multiplier", 1.03))
+        )
+        self.sma_200_lower_multiplier = (
+            float(sma_200_lower_multiplier) if sma_200_lower_multiplier is not None
+            else float(cfg.get("sma_200_lower_multiplier", 0.985))
+        )
+        self.sma_50_upper_multiplier = (
+            float(sma_50_upper_multiplier) if sma_50_upper_multiplier is not None
+            else float(cfg.get("sma_50_upper_multiplier", 1.02))
+        )
+        self.sma_50_lower_multiplier = (
+            float(sma_50_lower_multiplier) if sma_50_lower_multiplier is not None
+            else float(cfg.get("sma_50_lower_multiplier", 0.99))
+        )
+        self.rsi_overbought_threshold = (
+            float(rsi_overbought_threshold) if rsi_overbought_threshold is not None
+            else float(cfg.get("rsi_overbought_threshold", 70.0))
+        )
+        self.vix_safe_threshold = (
+            float(vix_safe_threshold) if vix_safe_threshold is not None
+            else float(cfg.get("vix_safe_threshold", 25.0))
+        )
+
+    def reset(self) -> None:
+        """Reset internal state for a fresh backtest run."""
+        self.prev_regime = "BEAR"
 
     @property
     def name(self) -> str:
@@ -47,17 +86,17 @@ class EnhancedSMATrendStrategy(BaseStrategy):
         # Calculate momentum confirmation signals
         macd_hist = (macd - macd_signal) if (macd is not None and macd_signal is not None) else 0.0
         is_momentum_bullish = macd_hist >= 0
-        is_not_overbought = rsi < 70.0
-        is_volatility_safe = vix is None or vix < 25.0
+        is_not_overbought = rsi < self.rsi_overbought_threshold
+        is_volatility_safe = vix is None or vix < self.vix_safe_threshold
 
         # Define asymmetric buffers around SMA lines
         # SMA_200 triggers the Bull vs Bear regime
-        sma_200_upper = sma_200 * 1.03
-        sma_200_lower = sma_200 * 0.985
+        sma_200_upper = sma_200 * self.sma_200_upper_multiplier
+        sma_200_lower = sma_200 * self.sma_200_lower_multiplier
 
         # SMA_50 triggers Strong vs Mild leverage regime
-        sma_50_upper = sma_50 * 1.02
-        sma_50_lower = sma_50 * 0.99
+        sma_50_upper = sma_50 * self.sma_50_upper_multiplier
+        sma_50_lower = sma_50 * self.sma_50_lower_multiplier
 
         # 1. Determine overall regime (Bull vs Bear) using SMA_200 buffers
         if self.prev_regime == "BEAR":
