@@ -1810,12 +1810,13 @@
             style: "Trend Following",
             complexity: "Simple",
             indicators: ["SMA 50 (Daily)", "SMA 200 (Daily)"],
-            philosophy: "Leverages standard moving average crossover regimes to stay aggressively exposed to TQQQ trends while hedging against severe bear markets by shifting down to 1x exposure when the trend breaks.",
-            mechanism: "Allocates 100% to TQQQ when the price of QQQ is above both the 50-day and 200-day Simple Moving Averages. Scales back to 100% QLD (2x) when above only the 200-day SMA, and retreats fully to QQQ (1x) during clear downtrends (below 200 SMA).",
+            philosophy: "Leverages standard moving average crossover regimes to stay aggressively exposed to TQQQ trends while hedging against severe bear markets by shifting down to 1x exposure when the trend breaks, and to CASH once a death cross confirms the bear market.",
+            mechanism: "Allocates 100% to TQQQ when the price of QQQ is above both the 50-day and 200-day Simple Moving Averages. Scales back to 100% QLD (2x) when above only the 200-day SMA, retreats to QQQ (1x) when price falls below the 200-day SMA, and moves fully to CASH once the 50-day SMA also crosses below the 200-day SMA (death cross).",
             rules: [
                 { cond: "Price > 50 SMA & Price > 200 SMA (Strong Uptrend)", alloc: { "TQQQ": 100, "QLD": 0, "QQQ": 0, "CASH": 0 } },
                 { cond: "Price <= 50 SMA & Price > 200 SMA (Mild Uptrend)", alloc: { "TQQQ": 0, "QLD": 100, "QQQ": 0, "CASH": 0 } },
-                { cond: "Price <= 200 SMA (Downtrend)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 100, "CASH": 0 } }
+                { cond: "Price <= 200 SMA & 50 SMA > 200 SMA (Downtrend)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 100, "CASH": 0 } },
+                { cond: "Price <= 200 SMA & 50 SMA <= 200 SMA (Death Cross)", alloc: { "TQQQ": 0, "QLD": 0, "QQQ": 0, "CASH": 100 } }
             ],
             pros: ["Outstanding returns during sustained, smooth upward trends.", "Protects portfolio capital from catastrophic, long-term bear markets (e.g. 2008)."],
             cons: ["Can suffer significant whipsaw losses in sideways, range-bound markets.", "Subject to entry delay at major market bottoms."]

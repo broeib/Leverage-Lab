@@ -70,6 +70,29 @@ def test_spaxx_allocation_alias():
     assert norm_blended == {"QQQ": 0.5, "CASH": 0.5}
 
 
+def test_sma_trend_regimes():
+    """Verify SMA Trend Regime ladder, including the death-cross CASH tier."""
+    strat = SMATrendStrategy()
+
+    # Above both SMAs -> TQQQ
+    alloc = strat.get_allocation(None, {"QQQ": 500.0, "SMA_50": 480.0, "SMA_200": 450.0}, {})
+    assert alloc == {"QQQ": 0.0, "QLD": 0.0, "TQQQ": 1.0, "CASH": 0.0}
+
+    # Below 50 SMA, above 200 SMA -> QLD
+    alloc = strat.get_allocation(None, {"QQQ": 470.0, "SMA_50": 480.0, "SMA_200": 450.0}, {})
+    assert alloc == {"QQQ": 0.0, "QLD": 1.0, "TQQQ": 0.0, "CASH": 0.0}
+
+    # Below 200 SMA, 50 SMA still above 200 SMA -> QQQ
+    alloc = strat.get_allocation(None, {"QQQ": 440.0, "SMA_50": 470.0, "SMA_200": 450.0}, {})
+    assert alloc == {"QQQ": 1.0, "QLD": 0.0, "TQQQ": 0.0, "CASH": 0.0}
+
+    # Below 200 SMA after a death cross (50 SMA < 200 SMA) -> CASH, even if price is above the 50 SMA
+    alloc = strat.get_allocation(None, {"QQQ": 430.0, "SMA_50": 420.0, "SMA_200": 450.0}, {})
+    assert alloc == {"QQQ": 0.0, "QLD": 0.0, "TQQQ": 0.0, "CASH": 1.0}
+    alloc = strat.get_allocation(None, {"QQQ": 400.0, "SMA_50": 420.0, "SMA_200": 450.0}, {})
+    assert alloc == {"QQQ": 0.0, "QLD": 0.0, "TQQQ": 0.0, "CASH": 1.0}
+
+
 def test_graduated_leverage_regimes():
     """Verify 4-tier graduated leverage allocation across all market regimes."""
     from strategies.graduated_leverage import GraduatedLeverageStrategy
