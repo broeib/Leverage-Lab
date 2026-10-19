@@ -144,7 +144,7 @@ class ComposerSMATechAITiltStrategy(BaseStrategy):
 
     @property
     def description(self) -> str:
-        return "stateless QQQ > 200 SMA switch between a blended Tech/AI basket (~1.7x leverage) and high-yield CASH."
+        return "stateless QQQ > 200 SMA switch between a blended Tech/AI basket (2.0x leverage) and high-yield CASH."
 
     def get_allocation(self, date, market_data: dict, portfolio_state: dict) -> Dict[str, float]:
         # Extract underlying price and indicators

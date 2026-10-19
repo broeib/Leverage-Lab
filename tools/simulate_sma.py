@@ -1,9 +1,12 @@
 import os
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
 import json
 import sys
+from typing import Optional, Dict
+import plotly.graph_objects as go
+
+
 
 # Define file paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -11,12 +14,43 @@ sys.path.insert(0, BASE_DIR)
 
 from indicators.rsi import compute_rsi
 from indicators.macd import compute_macd
+from strategies.enhanced_sma import EnhancedSMATrendStrategy
 
 DATA_FILE = os.path.join(BASE_DIR, "data", "etf_prices_qqq.csv")
-if not os.path.exists(DATA_FILE):
-    DATA_FILE = os.path.join(BASE_DIR, "data", "etf_prices.csv")
 VIX_FILE = os.path.join(BASE_DIR, "data", "vix_data.csv")
 OUTPUT_HTML = os.path.join(BASE_DIR, "dashboard", "sma_simulator.html")
+
+
+def map_allocation_to_label_and_reason(alloc_dict: dict, regime: str, rsi_val: float, m_hist: float, v_val: Optional[float]) -> tuple:
+    tqqq = alloc_dict.get("TQQQ", 0.0)
+    qld = alloc_dict.get("QLD", 0.0)
+    qqq = alloc_dict.get("QQQ", 0.0)
+    cash = alloc_dict.get("CASH", 0.0)
+
+    if tqqq == 1.0:
+        alloc = "TQQQ"
+        reason = "🟢 <b>Strong Bull confirmed:</b> Price is in strong trend with healthy momentum (MACD Histogram >= 0), stable volatility (VIX < 25), and normal RSI (< 70). Max speed in TQQQ (3x)."
+    elif qld == 0.5 and qqq == 0.5:
+        alloc = "QLD/QQQ"
+        disconf = []
+        if m_hist < 0:
+            disconf.append("bearish MACD histogram")
+        if rsi_val >= 70.0:
+            disconf.append("RSI overbought (>70)")
+        if v_val is not None and v_val >= 25.0:
+            disconf.append("VIX high stress (>=25)")
+        reason = f"🟣 <b>Strong Bull disconfirmed ({', '.join(disconf) if disconf else 'safeguard'}):</b> Trend is strong but key confirmations failed. De-leveraged to 50% QLD / 50% QQQ to avoid beta slippage."
+    elif qld == 1.0:
+        alloc = "QLD"
+        reason = "🟡 <b>Mild Bull confirmed:</b> Price is in mild uptrend and volatility is stable (VIX < 25). Target 100% QLD (2x) leverage."
+    elif qqq == 1.0:
+        alloc = "QQQ"
+        reason = "🔵 <b>Mild Bull high-risk (VIX high):</b> Trend is up, but market volatility is dangerous (VIX >= 25). Safely downshifted to 100% defensive QQQ."
+    else:
+        alloc = "CASH"
+        reason = "🔴 <b>Bear Market / Cash sweep:</b> Price fell below SMA_200 buffer band. Tactical exit to high-yield CASH (earning the 13-week T-bill rate) to protect nest egg."
+    return alloc, reason
+
 
 def run_simulation():
     print("="*60)
@@ -25,7 +59,7 @@ def run_simulation():
     
     # 1. Load ETF Prices
     if not os.path.exists(DATA_FILE):
-        print(f"Error: {DATA_FILE} not found. Please run backtest or download script first.")
+        print(f"Error: {DATA_FILE} not found. Legacy 'etf_prices.csv' is no longer supported; please run data download first.")
         return
         
     print(f"Loading data from {DATA_FILE}...")
@@ -44,12 +78,12 @@ def run_simulation():
     if os.path.exists(VIX_FILE):
         print(f"Loading VIX data from {VIX_FILE}...")
         vix_df = pd.read_csv(VIX_FILE, index_col=0, parse_dates=True)
-        vix = vix_df["VIX_Close"].reindex(qqq.index).ffill().fillna(19.0)
+        vix = vix_df["VIX_Close"].reindex(qqq.index).ffill()
     else:
-        print("Warning: VIX data file not found, defaulting to VIX = 19.0")
-        vix = pd.Series(19.0, index=qqq.index)
+        print("Warning: VIX data file not found, defaulting to None")
+        vix = pd.Series(np.nan, index=qqq.index)
         
-    # Combine into a single clean DataFrame and drop NaN warm-up rows
+    # Combine into a single clean DataFrame and drop NaN warm-up rows on indicators (preserve NaN VIX)
     sim_df = pd.DataFrame({
         'Price': qqq,
         'SMA_50': sma_50,
@@ -59,7 +93,9 @@ def run_simulation():
         'MACD_Signal': macd_signal,
         'MACD_Hist': macd_hist,
         'VIX': vix
-    }).dropna()
+    })
+    indicator_cols = ['Price', 'SMA_50', 'SMA_200', 'RSI', 'MACD', 'MACD_Signal', 'MACD_Hist']
+    sim_df = sim_df.dropna(subset=indicator_cols)
     
     print(f"Simulation window after indicator warm-up: {len(sim_df)} days ({sim_df.index[0].date()} to {sim_df.index[-1].date()})")
     
@@ -71,16 +107,19 @@ def run_simulation():
     enh_allocations = []
     enh_reasons = []
     
-    # State tracking for Enhanced hysteresis loop
-    prev_regime = "BEAR"  # "BULL_STRONG", "BULL_MILD", "BEAR"
+    strat = EnhancedSMATrendStrategy()
+    strat.reset()
     
     for idx, row in sim_df.iterrows():
         p = row['Price']
         s50 = row['SMA_50']
         s200 = row['SMA_200']
         rsi_val = row['RSI']
+        m_val = row['MACD']
+        ms_val = row['MACD_Signal']
         m_hist = row['MACD_Hist']
-        v_val = row['VIX']
+        v_raw = row['VIX']
+        v_val = None if pd.isna(v_raw) else float(v_raw)
         
         # A. Standard SMA Trend Regime
         if p > s50 and p > s200:
@@ -91,76 +130,21 @@ def run_simulation():
             std_reg = 'QQQ'
         std_regimes.append(std_reg)
         
-        # B. Enhanced Quant SMA Regime
-        # Technical confirmations
-        is_momentum_bullish = m_hist >= 0
-        is_not_overbought = rsi_val < 70.0
-        is_volatility_safe = v_val < 25.0
-        
-        # Buffers
-        sma_200_upper = s200 * 1.03
-        sma_200_lower = s200 * 0.985
-        sma_50_upper = s50 * 1.02
-        sma_50_lower = s50 * 0.99
-        
-        # Determine Major Regime (BULL vs BEAR) using SMA_200 buffers
-        if prev_regime == "BEAR":
-            if p > sma_200_upper:
-                current_major = "BULL"
-            else:
-                current_major = "BEAR"
-        else:
-            if p < sma_200_lower:
-                current_major = "BEAR"
-            else:
-                current_major = "BULL"
-                
-        # Determine Regime using SMA_50 buffers (if in BULL)
-        if current_major == "BULL":
-            if prev_regime == "BULL_STRONG":
-                if p < sma_50_lower:
-                    current_regime = "BULL_MILD"
-                else:
-                    current_regime = "BULL_STRONG"
-            elif prev_regime == "BULL_MILD":
-                if p > sma_50_upper:
-                    current_regime = "BULL_STRONG"
-                else:
-                    current_regime = "BULL_MILD"
-            else:  # Coming from BEAR
-                if p > sma_50_upper:
-                    current_regime = "BULL_STRONG"
-                else:
-                    current_regime = "BULL_MILD"
-        else:
-            current_regime = "BEAR"
-            
-        prev_regime = current_regime
+        # B. Enhanced Quant SMA Regime driven by EnhancedSMATrendStrategy
+        market_data = {
+            "QQQ": float(p),
+            "SMA_50": float(s50),
+            "SMA_200": float(s200),
+            "RSI": float(rsi_val),
+            "MACD": float(m_val),
+            "MACD_Signal": float(ms_val),
+            "VIX": v_val
+        }
+        alloc_dict = strat.get_allocation(idx, market_data, {})
+        current_regime = strat.prev_regime
         enh_regimes.append(current_regime)
         
-        # Apply technical confirmations to choose active allocation
-        if current_regime == "BULL_STRONG":
-            if is_momentum_bullish and is_not_overbought and is_volatility_safe:
-                alloc = "TQQQ"
-                reason = "🟢 <b>Strong Bull confirmed:</b> Price is in strong trend with healthy momentum (MACD Histogram >= 0), stable volatility (VIX < 25), and normal RSI (< 70). Max speed in TQQQ (3x)."
-            else:
-                alloc = "QLD/QQQ"
-                disconf = []
-                if not is_momentum_bullish: disconf.append("bearish MACD histogram")
-                if not is_not_overbought: disconf.append("RSI overbought (>70)")
-                if not is_volatility_safe: disconf.append("VIX high stress (>=25)")
-                reason = f"🟣 <b>Strong Bull disconfirmed ({', '.join(disconf)}):</b> Trend is strong but key confirmations failed. De-leveraged to 50% QLD / 50% QQQ to avoid beta slippage."
-        elif current_regime == "BULL_MILD":
-            if is_volatility_safe:
-                alloc = "QLD"
-                reason = "🟡 <b>Mild Bull confirmed:</b> Price is in mild uptrend and volatility is stable (VIX < 25). Target 100% QLD (2x) leverage."
-            else:
-                alloc = "QQQ"
-                reason = "🔵 <b>Mild Bull high-risk (VIX high):</b> Trend is up, but market volatility is dangerous (VIX >= 25). Safely downshifted to 100% defensive QQQ."
-        else:  # BEAR
-            alloc = "CASH"
-            reason = "🔴 <b>Bear Market / Cash sweep:</b> Price fell below SMA_200 buffer band. Tactical exit to high-yield CASH (SGOV proxy at 4.5% yield) to protect nest egg."
-            
+        alloc, reason = map_allocation_to_label_and_reason(alloc_dict, current_regime, rsi_val, m_hist, v_val)
         enh_allocations.append(alloc)
         enh_reasons.append(reason)
         
@@ -168,6 +152,7 @@ def run_simulation():
     sim_df['Enh_Regime'] = enh_regimes
     sim_df['Enh_Alloc'] = enh_allocations
     sim_df['Enh_Reason'] = enh_reasons
+
     
     # 5. Detect Trigger Events
     print("Compiling trigger event timelines...")
@@ -315,7 +300,7 @@ def run_simulation():
         height=550
     )
     
-    plotly_div = fig.to_html(full_html=False, include_plotlyjs='cdn', div_id='sma-chart')
+    plotly_div = fig.to_html(full_html=False, include_plotlyjs=False, div_id='sma-chart')
     
     # 7. Serialize Data to JSON Strings
     js_data = []
@@ -327,7 +312,7 @@ def run_simulation():
             's200': float(row['SMA_200']),
             'rsi': float(row['RSI']),
             'macd_h': float(row['MACD_Hist']),
-            'vix': float(row['VIX']),
+            'vix': None if pd.isna(row['VIX']) else float(row['VIX']),
             'std_reg': row['Std_Regime'],
             'enh_reg': row['Enh_Regime'],
             'enh_all': row['Enh_Alloc'],

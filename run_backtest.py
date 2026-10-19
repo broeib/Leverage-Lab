@@ -18,7 +18,7 @@ import pandas as pd
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from data.download_data import load_all_data, UNIVERSES
+from data.download_data import load_all_data, load_risk_free_rate, get_inception_dates, UNIVERSES
 from indicators.sma import add_sma_columns
 from indicators.rsi import add_rsi_column
 from indicators.bollinger import add_bollinger_columns
@@ -27,7 +27,7 @@ from indicators.composite import add_composite_column
 from indicators.ema_channel import add_ema_channel_columns, add_risk_overlay_columns
 from engine.backtester import Backtester, generate_summary_table, BacktestResult
 from strategies import ALL_STRATEGIES, ALL_BENCHMARKS
-from tools.config_loader import get_universe_params, get_strategy_params
+from tools.config_loader import get_universe_params, get_strategy_params, get_backtest_params
 from engine.logger import logger
 
 
@@ -115,7 +115,10 @@ def export_dashboard_data(
     results: List[BacktestResult], 
     summary_df: pd.DataFrame, 
     output_dir: str, 
-    universe_key: str
+    universe_key: str,
+    rf_rate: Optional[pd.Series] = None,
+    slippage: float = 0.0,
+    execution_lag_days: int = 1,
 ) -> str:
     """Export results as JSON for the interactive dashboard.
 
@@ -124,12 +127,39 @@ def export_dashboard_data(
         summary_df: Summary DataFrame.
         output_dir: Directory to write to.
         universe_key: Universe key ("qqq" or "soxx").
+        rf_rate: Optional risk-free rate series.
+        slippage: Slippage parameter used.
+        execution_lag_days: Lag days parameter used.
 
     Returns:
         str: Path to the generated JSON dashboard file.
     """
     config = UNIVERSES[universe_key]
     tickers = config["tickers"]
+
+    # Compute risk-free mean
+    if rf_rate is not None and not rf_rate.empty:
+        rf_annual_mean = float(rf_rate.mean())
+    elif results and not results[0].history.empty and "rf_annual" in results[0].history.columns:
+        rf_annual_mean = float(results[0].history["rf_annual"].mean())
+    else:
+        rf_annual_mean = 0.04
+
+    # Determine risk free curve
+    if results and not results[0].history.empty:
+        rf_dates = [str(d.date()) for d in results[0].history.index]
+        if "rf_annual" in results[0].history.columns:
+            rf_annual = [round(float(v), 5) for v in results[0].history["rf_annual"].values]
+        elif rf_rate is not None:
+            rf_annual = [
+                round(float(rf_rate.loc[d]), 5) if d in rf_rate.index else 0.04
+                for d in results[0].history.index
+            ]
+        else:
+            rf_annual = [0.04] * len(rf_dates)
+    else:
+        rf_dates = []
+        rf_annual = []
 
     dashboard_data = {
         "universe": {
@@ -138,16 +168,30 @@ def export_dashboard_data(
             "tickers": tickers,
             "start_date": config["start_date"],
         },
+        "assumptions": {
+            "risk_free_source": "^IRX 13-week T-bill",
+            "rf_annual_mean": round(rf_annual_mean, 5),
+            "slippage": float(slippage),
+            "execution_lag_days": int(execution_lag_days),
+            "synthetic_before": get_inception_dates(universe_key),
+        },
+        "risk_free": {
+            "dates": rf_dates,
+            "annual": rf_annual,
+        },
         "summary": [],
         "equity_curves": {},
         "drawdown_curves": {},
         "allocation_history": {},
     }
 
-    # Summary table — rename strategies for display
+    # Summary table — rename strategies and include descriptions with renamed tickers
+    desc_map = {r.strategy_name: r.description for r in results}
     for _, row in summary_df.iterrows():
         row_dict = row.to_dict()
-        row_dict["Strategy"] = _rename_strategy(row_dict["Strategy"], config)
+        strat_orig = row_dict["Strategy"]
+        row_dict["Strategy"] = _rename_strategy(strat_orig, config)
+        row_dict["description"] = _rename_strategy(desc_map.get(strat_orig, ""), config)
         dashboard_data["summary"].append(row_dict)
 
     # Time series data for each strategy
@@ -161,8 +205,8 @@ def export_dashboard_data(
         dates = [str(d.date()) for d in h.index]
         dashboard_data["equity_curves"][name] = {
             "dates": dates,
-            "values": [round(v, 2) for v in h["total_value"].values],
-            "invested": [round(v, 2) for v in h["total_invested"].values],
+            "values": [int(round(v)) for v in h["total_value"].values],
+            "invested": [int(round(v)) for v in h["total_invested"].values],
         }
 
         dashboard_data["drawdown_curves"][name] = {
@@ -172,10 +216,10 @@ def export_dashboard_data(
 
         dashboard_data["allocation_history"][name] = {
             "dates": dates,
-            "QQQ": [round(v, 4) for v in h["QQQ_alloc"].values] if "QQQ_alloc" in h.columns else [0.0] * len(h),
-            "QLD": [round(v, 4) for v in h["QLD_alloc"].values] if "QLD_alloc" in h.columns else [0.0] * len(h),
-            "TQQQ": [round(v, 4) for v in h["TQQQ_alloc"].values] if "TQQQ_alloc" in h.columns else [0.0] * len(h),
-            "CASH": [round(v, 4) for v in h["CASH_alloc"].values] if "CASH_alloc" in h.columns else [0.0] * len(h),
+            "QQQ": [round(float(v), 3) for v in h["QQQ_alloc"].values] if "QQQ_alloc" in h.columns else [0.0] * len(h),
+            "QLD": [round(float(v), 3) for v in h["QLD_alloc"].values] if "QLD_alloc" in h.columns else [0.0] * len(h),
+            "TQQQ": [round(float(v), 3) for v in h["TQQQ_alloc"].values] if "TQQQ_alloc" in h.columns else [0.0] * len(h),
+            "CASH": [round(float(v), 3) for v in h["CASH_alloc"].values] if "CASH_alloc" in h.columns else [0.0] * len(h),
         }
 
     output_file = os.path.join(output_dir, f"dashboard_data_{universe_key}.json")
@@ -206,13 +250,23 @@ def run_universe(universe_key: str, force_refresh: bool = False) -> Tuple[List[B
     logger.info(f"  Tickers: {tickers['1x']} (1x), {tickers['2x']} (2x), {tickers['3x']} (3x)")
     logger.info("=" * 70)
 
-    # 1. Load dynamic configuration parameters for weekly contribution
-    universe_params = get_universe_params(universe_key)
-    weekly_contribution = universe_params.get("weekly_contribution", 5000.0)
+    # 1. Load dynamic configuration parameters for backtest
+    backtest_params = get_backtest_params(universe_key)
+    weekly_contribution = backtest_params["weekly_contribution"]
+    slippage = backtest_params["slippage"]
+    execution_lag_days = backtest_params["execution_lag_days"]
 
     # 2. Load data
     logger.info(f"[1/5] Loading historical data for {config['name']}...")
     close_prices, vix_data = load_all_data(universe=universe_key, force_refresh=force_refresh)
+    rf_rate = load_risk_free_rate(close_prices.index, force_refresh=force_refresh)
+
+    mean_rf = float(rf_rate.mean()) if (rf_rate is not None and not rf_rate.empty) else 0.04
+    logger.info(
+        f"Backtest Assumptions — RF Source: '^IRX 13-week T-bill' (mean: {mean_rf:.2%}), "
+        f"Slippage: {slippage * 10000:.1f} bps, Lag: {execution_lag_days} day(s), "
+        f"Synthetic before: {get_inception_dates(universe_key)}"
+    )
 
     # 3. Compute indicators
     logger.info("[2/5] Computing technical indicators...")
@@ -237,7 +291,10 @@ def run_universe(universe_key: str, force_refresh: bool = False) -> Tuple[List[B
         close_prices, 
         vix_data, 
         indicator_data, 
-        weekly_contribution=weekly_contribution
+        weekly_contribution=weekly_contribution,
+        rf_rate=rf_rate,
+        slippage=slippage,
+        execution_lag_days=execution_lag_days,
     )
     results = backtester.run_all(all_runners)
 
@@ -279,7 +336,15 @@ def run_universe(universe_key: str, force_refresh: bool = False) -> Tuple[List[B
     print(display_df.to_string(index=False))
 
     # Export dashboard data
-    export_dashboard_data(results, summary_df, results_dir, universe_key)
+    export_dashboard_data(
+        results, 
+        summary_df, 
+        results_dir, 
+        universe_key,
+        rf_rate=rf_rate,
+        slippage=slippage,
+        execution_lag_days=execution_lag_days,
+    )
 
     return results, summary_df
 

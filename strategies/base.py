@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Dict
+from engine.constants import VALID_TICKERS
 
 
 class BaseStrategy(ABC):
@@ -10,6 +11,10 @@ class BaseStrategy(ABC):
     All strategies must implement get_allocation() which returns the target
     percentage allocation across QQQ, QLD, and TQQQ.
     """
+
+    def reset(self) -> None:
+        """Reset internal state for a fresh backtest run."""
+        pass
 
     @property
     @abstractmethod
@@ -66,9 +71,8 @@ class BaseStrategy(ABC):
             canonical_ticker = "CASH" if ticker == "SPAXX" else ticker
             normalized_raw[canonical_ticker] = normalized_raw.get(canonical_ticker, 0.0) + weight
 
-        valid_tickers = {"QQQ", "QLD", "TQQQ", "CASH"}
         for ticker in normalized_raw:
-            if ticker not in valid_tickers:
+            if ticker not in VALID_TICKERS:
                 raise ValueError(f"Invalid ticker: {ticker}")
             if normalized_raw[ticker] < 0:
                 raise ValueError(f"Negative allocation for {ticker}: {normalized_raw[ticker]}")
